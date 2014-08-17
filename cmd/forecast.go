@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strings"
 )
 
@@ -12,13 +11,17 @@ func init() {
 }
 
 func GetForecast(msg *Message) {
-	location := url.QueryEscape(strings.Join(msg.Params[1:], " "))
+	geoAddr, err := GetCoordinates(msg.Params[1:])
+	if err != nil {
+		msg.Return("I couldn't track down that location!")
+		return
+	}
 	WUNDERGROUND, avail := GetConfig("Wunderground")
 	if avail != true {
 		fmt.Println("wunderground API key not available")
 		return
 	}
-	url := fmt.Sprintf("http://api.wunderground.com/api/%s/forecast/q/%s.json", WUNDERGROUND, location)
+	url := fmt.Sprintf("http://api.wunderground.com/api/%s/forecast/q/%v,%v.json", WUNDERGROUND, geoAddr.Lat, geoAddr.Long)
 	data, err := getSite(url)
 	if err != nil {
 		msg.Return("Error!")
