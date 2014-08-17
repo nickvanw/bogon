@@ -10,13 +10,21 @@ import (
 	"github.com/sorcix/irc"
 )
 
+var SymbolToRune = map[string]rune{
+	"@": 'o',
+	"+": 'v',
+	"%": 'h',
+	"&": 'a',
+	"~": 'q',
+}
+
 func RegisterStateHandlers(bot *ircx.Bot, state *State) {
 	bot.AddCallback(irc.JOIN, ircx.Callback{Handler: &JoinHandler{Bot: bot, State: state}})
 	bot.AddCallback(irc.PART, ircx.Callback{Handler: &PartHandler{Bot: bot, State: state}})
 	bot.AddCallback(irc.QUIT, ircx.Callback{Handler: &QuitHandler{Bot: bot, State: state}})
 	bot.AddCallback(irc.KICK, ircx.Callback{Handler: &KickHandler{Bot: bot, State: state}})
 	bot.AddCallback(irc.MODE, ircx.Callback{Handler: &ModeHandler{Bot: bot, State: state}})
-	/*bot.AddCallback(irc.TOPIC, c)*/
+	bot.AddCallback(irc.RPL_TOPIC, ircx.Callback{Handler: &TopicHandler{Bot: bot, State: state}})
 	bot.AddCallback(irc.RPL_NAMREPLY, ircx.Callback{Handler: &NamesHandler{Bot: bot, State: state}})
 }
 
@@ -72,6 +80,7 @@ func (s *State) RemoveUser(channel string, name string) {
 	defer s.Unlock()
 	remChannel, err := s.GetChan(channel)
 	if err != nil {
+		log.Println("I tried to remove a user form a channel I have no record of")
 		return
 	}
 	remChannel.RemoveUser(name)
@@ -100,7 +109,7 @@ func (c *Channel) NewUser(user string) {
 	modes := make(map[rune]struct{})
 	switch rune(user[0]) {
 	case '~', '&', '@', '%', '+':
-		modes[rune(user[0])] = struct{}{}
+		modes[SymbolToRune[string(user[0])]] = struct{}{}
 		user = user[1:]
 	}
 	c.Users = append(c.Users, &User{Name: user, Modes: modes})
