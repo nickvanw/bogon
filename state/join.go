@@ -11,10 +11,16 @@ type JoinHandler struct {
 }
 
 func (h *JoinHandler) Handle(s irc.Sender, m *irc.Message) {
-	if m.Prefix.Name == h.State.Name {
-		h.State.NewChannel(m.Trailing)
+	var channel string
+	if len(m.Params) > 0 {
+		channel = m.Params[0]
 	} else {
-		h.State.NewUser(m.Trailing, m.Prefix.Name)
+		channel = m.Trailing
+	}
+	if m.Prefix.Name == h.State.Name {
+		h.State.NewChannel(channel)
+	} else {
+		h.State.NewUser(channel, m.Prefix.Name)
 	}
 }
 

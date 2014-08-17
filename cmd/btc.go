@@ -14,7 +14,8 @@ func BitCoin(msg *Message) {
 	ch := make(chan string)
 	go getBitStamp(ch)
 	go getBtcE(ch)
-	for val := range ch {
+	for i := 0; i < 2; i++ {
+		val := <-ch
 		out = fmt.Sprintf("%s %s", out, val)
 	}
 	msg.Return(out)

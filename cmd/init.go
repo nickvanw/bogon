@@ -9,7 +9,7 @@ import (
 
 var (
 	Commands   []Cmd
-	ConfigData configFile
+	ConfigData map[string]string
 )
 
 func init() {
@@ -40,6 +40,7 @@ type Cmd struct {
 	Raw          bool
 }
 
-type configFile struct {
-	Command map[string]map[string]string
+func GetConfig(conf string) (string, bool) {
+	conf, ok := ConfigData[conf]
+	return conf, ok
 }

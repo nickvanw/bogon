@@ -34,7 +34,6 @@ func WalkScore(msg *Message) {
 	}
 	var ws WalkScoreData
 	json.Unmarshal(wdata, &ws)
-	fmt.Println(string(wdata))
 	if ws.Status != 1 {
 		msg.Return("I couldn't find that in Walkscore's database")
 		return

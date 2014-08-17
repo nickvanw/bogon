@@ -14,21 +14,22 @@ type CommandHandler struct {
 }
 
 func (cmd *CommandHandler) Handle(s irc.Sender, m *irc.Message) {
-	data := strings.Split(m.Trailing, " ")
-	sendMessage := &Message{
-		Params: data,
-		Sender: s,
-		State:  cmd.State,
-	}
-	// Transparently make Return send message to the channel the
-	// message was sent in, or to the user in PM
-	if strings.ContainsAny(m.Params[0], strings.Join([]string{string(irc.Channel), string(irc.Distributed)}, "")) {
-		sendMessage.To = m.Params[0]
-	} else {
-		sendMessage.To = m.Name
-	}
 	for _, v := range Commands {
+		data := strings.Split(m.Trailing, " ")
 		if v.Command.MatchString(data[0]) || v.Raw {
+			sendMessage := &Message{
+				Params: data,
+				Sender: s,
+				State:  cmd.State,
+			}
+			// Transparently make Return send message to the channel the
+			// message was sent in, or to the user in PM
+			if strings.ContainsAny(m.Params[0], strings.Join([]string{string(irc.Channel), string(irc.Distributed)}, "")) {
+				sendMessage.To = m.Params[0]
+			} else {
+				sendMessage.To = m.Name
+			}
+			sendMessage.Name = v.Name
 			go v.Function(sendMessage)
 		}
 	}
@@ -39,6 +40,7 @@ type Message struct {
 	Sender irc.Sender
 	To     string
 	State  *state.State
+	Name   string
 }
 
 func (m *Message) Return(out string) {
