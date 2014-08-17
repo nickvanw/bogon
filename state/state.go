@@ -28,6 +28,8 @@ func RegisterStateHandlers(bot *ircx.Bot, state *State) {
 	bot.AddCallback(irc.RPL_NAMREPLY, ircx.Callback{Handler: &NamesHandler{Bot: bot, State: state}})
 	bot.AddCallback(irc.ERR_NICKNAMEINUSE, ircx.Callback{Handler: &NickTakenHandler{Bot: bot, State: state}})
 	bot.AddCallback(irc.NICK, ircx.Callback{Handler: &NickHandler{Bot: bot, State: state}})
+	bot.AddCallback(irc.INVITE, ircx.Callback{Handler: &InviteHandler{Bot: bot, State: state}})
+
 }
 
 type State struct {

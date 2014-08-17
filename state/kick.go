@@ -11,9 +11,16 @@ type KickHandler struct {
 }
 
 func (h *KickHandler) Handle(s irc.Sender, m *irc.Message) {
-	if m.Prefix.Name == h.State.Name {
+	if m.Params[1] == h.State.Name {
 		h.State.RemoveChannel(m.Params[0])
+		if on, ok := h.Bot.Options["rejoin"]; ok && on {
+			msg := &irc.Message{
+				Command: irc.JOIN,
+				Params:  []string{m.Params[0]},
+			}
+			s.Send(msg)
+		}
 	} else {
-		h.State.RemoveUser(m.Params[0], m.Prefix.Name)
+		h.State.RemoveUser(m.Params[0], m.Params[1])
 	}
 }
