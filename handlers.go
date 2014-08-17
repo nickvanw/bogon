@@ -14,6 +14,7 @@ func RegisterCoreHandlers(bot *ircx.Bot, state *state.State) {
 
 	// Add the command handler for channel commands
 	bot.AddCallback(irc.PRIVMSG, ircx.Callback{Handler: &cmd.CommandHandler{Bot: bot, State: state}})
+	bot.AddCallback(irc.NOTICE, ircx.Callback{Handler: &cmd.NickServHandler{Bot: bot, State: state}})
 }
 
 func PingHandler(s irc.Sender, m *irc.Message) {
