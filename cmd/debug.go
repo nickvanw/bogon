@@ -7,5 +7,12 @@ func init() {
 }
 func ChanStat(msg *Message) {
 	ch, err := msg.State.GetChan(msg.To)
-	msg.Return(fmt.Sprintf("%s, %s", ch, err))
+	if err != nil {
+		msg.Return("I couldn't even find this channel, I'm not working well")
+		return
+	}
+	numPeople := len(ch.Users)
+	ops := ch.Ops()
+	voice := ch.Voice()
+	msg.Return(fmt.Sprintf("%s: %d people, %d ops, %d voice", ch.Name, numPeople, ops, voice))
 }

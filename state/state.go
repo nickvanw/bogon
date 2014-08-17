@@ -114,3 +114,23 @@ func (c *Channel) NewUser(user string) {
 	}
 	c.Users = append(c.Users, &User{Name: user, Modes: modes})
 }
+
+func (c *Channel) Ops() int {
+	num := 0
+	for _, v := range c.Users {
+		if _, ok := v.Modes['o']; ok {
+			num++
+		}
+	}
+	return num
+}
+
+func (c *Channel) Voice() int {
+	num := 0
+	for _, v := range c.Users {
+		if _, ok := v.Modes['v']; ok {
+			num++
+		}
+	}
+	return num
+}

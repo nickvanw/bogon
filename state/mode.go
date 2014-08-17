@@ -25,6 +25,8 @@ func (s *State) ParseModes(modes []string) {
 	modeString := modes[1]
 	modeArgs := modes[2:]
 	var plus bool
+	s.Lock()
+	defer s.Unlock()
 	for _, v := range modeString {
 		switch v {
 		case '+':
