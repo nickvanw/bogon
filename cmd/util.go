@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -17,7 +18,10 @@ const bucket = "i.nvw.io"
 const bucketpath = "http://i.nvw.io/"
 
 func getSite(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+	client := &http.Client{
+		Timeout: time.Second * 3,
+	}
+	resp, err := client.Get(url)
 	if err != nil {
 		return nil, err
 	}
