@@ -18,7 +18,7 @@ var (
 	name     = flag.String("name", "ircx", "Nick to use in IRC")
 	server   = flag.String("server", "chat.freenode.org:6667", "Host:Port to connect to")
 	user     = flag.String("user", "ircx", "User to send to IRC server")
-	password = flag.String("password", "", "Passeword to send to irc server")
+	password = flag.String("password", "", "Password to send to irc server")
 	channels = flag.String("chan", "#test", "Channels to join")
 	redis    = flag.String("redis", "127.0.0.1:6379", "Redis Port")
 )
