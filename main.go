@@ -22,7 +22,7 @@ var (
 
 func main() {
 	flag.Parse()
-	newServer := Bot{Bot: ircx.Classic(*server, *name), State: &state.State{}}
+	newServer := Bot{Bot: ircx.Classic(*server, *name), State: &state.State{Encryption: map[string]string{}}}
 	if err := newServer.Connect(); err != nil {
 		log.Panicln("Unable to dial IRC Server ", err)
 	}

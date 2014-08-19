@@ -25,6 +25,10 @@ func (s *State) RenameUser(oldname string, newname string) {
 		olduser := channel.GetUser(oldname)
 		olduser.Name = newname
 	}
+	if data, ok := s.Encryption[oldname]; ok {
+		delete(s.Encryption, oldname)
+		s.Encryption[newname] = data
+	}
 	s.Unlock()
 }
 

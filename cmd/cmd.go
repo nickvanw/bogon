@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"encoding/base64"
 	"strings"
 
 	"github.com/nickvanw/bogon/state"
+	"github.com/nickvanw/bogon/state/dh1080"
 	"github.com/nickvanw/ircx"
 	"github.com/sorcix/irc"
 )
@@ -14,20 +16,41 @@ type CommandHandler struct {
 }
 
 func (cmd *CommandHandler) Handle(s irc.Sender, m *irc.Message) {
+	enc := false
+	var to, message string
+	if strings.ContainsAny(m.Params[0], strings.Join([]string{string(irc.Channel), string(irc.Distributed)}, "")) {
+		message = m.Trailing
+		to = m.Params[0]
+	} else {
+		to = m.Name
+		if strings.HasPrefix(m.Trailing, "+OK *") {
+			if key, ok := cmd.State.Encryption[to]; ok {
+				decodeData := strings.TrimLeft(m.Trailing, "+OK *")
+				rawData, err := base64.StdEncoding.DecodeString(decodeData)
+				if err != nil {
+					return
+				}
+				data, err := dh1080.Dec(rawData, []byte(key))
+				if err != nil {
+					return
+				} else {
+					message = string(data)
+					enc = true
+				}
+			}
+		} else {
+			message = m.Trailing
+		}
+	}
 	for _, v := range Commands {
-		data := strings.Split(m.Trailing, " ")
+		data := strings.Split(message, " ")
 		if v.Command.MatchString(data[0]) || v.Raw {
 			sendMessage := &Message{
 				Params: data,
 				Sender: s,
 				State:  cmd.State,
-			}
-			// Transparently make Return send message to the channel the
-			// message was sent in, or to the user in PM
-			if strings.ContainsAny(m.Params[0], strings.Join([]string{string(irc.Channel), string(irc.Distributed)}, "")) {
-				sendMessage.To = m.Params[0]
-			} else {
-				sendMessage.To = m.Name
+				Enc:    enc,
+				To:     to,
 			}
 			sendMessage.Name = v.Name
 			go v.Function(sendMessage)
@@ -41,9 +64,18 @@ type Message struct {
 	To     string
 	State  *state.State
 	Name   string
+	Enc    bool
 }
 
 func (m *Message) Return(out string) {
+	if m.Enc {
+		if key, ok := m.State.Encryption[m.To]; ok {
+			data, err := dh1080.Enc([]byte(out), []byte(key))
+			if err == nil {
+				out = "+OK *" + base64.StdEncoding.EncodeToString(data)
+			}
+		}
+	}
 	newMsg := &irc.Message{
 		Command:  irc.PRIVMSG,
 		Params:   []string{m.To},

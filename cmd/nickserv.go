@@ -15,7 +15,6 @@ type NickServHandler struct {
 }
 
 func (h *NickServHandler) Handle(s irc.Sender, m *irc.Message) {
-	fmt.Println(m.Name, m.Params, m.Trailing)
 	username, u_ok := GetConfig("NickservUser")
 	password, p_ok := GetConfig("NickservPass")
 	nickserv, ns_ok := GetConfig("Nickserv")
