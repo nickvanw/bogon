@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -88,4 +89,10 @@ func urlencode(s string) (result string) {
 	}
 
 	return result
+}
+
+func stripNewLines(in string) string {
+	rn := strings.Replace(in, "\r\n", " ", -1)
+	n := strings.Replace(rn, "\n", " ", -1)
+	return strings.Replace(n, "\r", " ", -1)
 }
