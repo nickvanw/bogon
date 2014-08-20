@@ -3,9 +3,8 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/fzzy/radix/redis"
+	"github.com/garyburd/redigo/redis"
 )
 
 func init() {
@@ -22,18 +21,15 @@ func Raw(msg *Message) {
 }
 
 func HandleRedis(msg *Message) {
-	redis, err := redis.DialTimeout("tcp", "127.0.0.1:6379", time.Duration(10)*time.Second)
-	if err != nil {
-		fmt.Println("[ERR]: Redis Error!")
-	} else {
-		bm, ex := GetIfExistsBookmark(msg.Params[0], redis)
-		if ex {
-			msg.Return(bm)
-		}
+	bm, ex := GetIfExistsBookmark(msg.Params[0])
+	if ex {
+		msg.Return(bm)
 	}
 }
 
-func GetIfExistsBookmark(begin string, rc *redis.Client) (string, bool) {
+func GetIfExistsBookmark(begin string) (string, bool) {
+	conn := pool.Get()
+	defer conn.Close()
 	if len(begin) < 1 {
 		return "", false
 	}
@@ -43,7 +39,7 @@ func GetIfExistsBookmark(begin string, rc *redis.Client) (string, bool) {
 		return "", false
 	}
 	testString := fmt.Sprintf("%s:%s", PREFIX, "bm")
-	ret, err := rc.Cmd("hget", testString, begin).Str()
+	ret, err := redis.String(conn.Do("hget", testString, begin))
 	if err != nil {
 		return "", false
 	} else {
@@ -52,9 +48,11 @@ func GetIfExistsBookmark(begin string, rc *redis.Client) (string, bool) {
 	}
 }
 
-func GetBookmark(id string, rc *redis.Client) string {
+func GetBookmark(id string) string {
+	conn := pool.Get()
+	defer conn.Close()
 	testString := fmt.Sprintf("%s:%s", PREFIX, "bm")
-	data, err := rc.Cmd("hget", testString, strings.ToLower(id[1:])).Str()
+	data, err := redis.String(conn.Do("hget", testString, strings.ToLower(id[1:])))
 	if err != nil {
 		return "false"
 	} else {

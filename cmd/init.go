@@ -1,10 +1,12 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
 	"regexp"
+	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/garyburd/redigo/redis"
 )
 
 var (
@@ -12,11 +14,14 @@ var (
 	ConfigData map[string]string
 )
 
-func init() {
-	_, err := toml.DecodeFile("config.toml", &ConfigData)
-	if err != nil {
-		fmt.Printf("Unable to load config file, this means multiple commands will not work: %s\r\n", err)
-		return
+var (
+	pool *redis.Pool
+)
+
+func InitCommand(config, redis string) {
+	pool = newPool(redis)
+	if err := LoadConfig(config); err != nil {
+		log.Println("Unable to get config file, some commands and features will not work")
 	}
 }
 
@@ -40,7 +45,36 @@ type Cmd struct {
 	Raw          bool
 }
 
+func LoadConfig(file string) error {
+	_, err := toml.DecodeFile(file, &ConfigData)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetConfig(conf string) (string, bool) {
+	if ConfigData == nil {
+		return "", false
+	}
 	conf, ok := ConfigData[conf]
 	return conf, ok
+}
+
+func newPool(server string) *redis.Pool {
+	return &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", server)
+			if err != nil {
+				return nil, err
+			}
+			return c, err
+		},
+		TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
+		},
+	}
 }

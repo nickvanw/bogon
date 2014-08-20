@@ -3,9 +3,8 @@ package cmd
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/fzzy/radix/redis"
+	"github.com/garyburd/redigo/redis"
 )
 
 func init() {
@@ -48,13 +47,14 @@ func RemoveBM(msg *Message) {
 
 func InsertBookmark(key string, msg string) bool {
 	key = strings.ToLower(key)
-	redis, err := redis.DialTimeout("tcp", "127.0.0.1:6379", time.Duration(10)*time.Second)
-	if err != nil || isCmd(fmt.Sprintf(".%s", key)) {
+	conn := pool.Get()
+	defer conn.Close()
+	if isCmd(fmt.Sprintf(".%s", key)) {
 		return false
 	} else {
 		bmhash := fmt.Sprintf("%s:%s", PREFIX, "bm")
-		ret := redis.Cmd("hset", bmhash, key, msg)
-		if ret.Err != nil {
+		_, err := conn.Do("hset", bmhash, key, msg)
+		if err != nil {
 			return false
 		}
 		return true
@@ -72,16 +72,12 @@ func isCmd(key string) bool {
 
 func RemoveBookmark(key string) bool {
 	key = strings.ToLower(key)
-	redis, err := redis.DialTimeout("tcp", "127.0.0.1:6379", time.Duration(10)*time.Second)
-	if err != nil {
+	conn := pool.Get()
+	defer conn.Close()
+	bmhash := fmt.Sprintf("%s:%s", PREFIX, "bm")
+	data, err := redis.Int(conn.Do("hdel", bmhash, key))
+	if err != nil || data == 0 {
 		return false
-	} else {
-		bmhash := fmt.Sprintf("%s:%s", PREFIX, "bm")
-		ret := redis.Cmd("hdel", bmhash, key)
-		val, reterr := ret.Int()
-		if reterr != nil || val == 0 {
-			return false
-		}
-		return true
 	}
+	return true
 }
