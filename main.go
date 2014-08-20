@@ -29,19 +29,40 @@ var (
 
 func main() {
 	flag.Parse()
+
+	// Set up command system (redis, config file)
 	cmd.InitCommand(*config, *redisServer)
+
+	// check if we're using a pasword to connect to IRC
 	*password = os.Getenv("PASS")
-	newServer := Bot{Bot: ircx.WithLogin(*server, *name, *user, *password), State: &state.State{Encryption: map[string]string{}}}
+
+	// set up the Bot we'll be connecting to IRC
+	newBot := ircx.WithLogin(*server, *name, *user, *password)
+
+	// create the bot's state and initialize it
+	newState := &state.State{Encryption: map[string]string{}, Name: *name}
+	newState.InitState()
+
+	// create our combination of bot and state
+	newServer := Bot{Bot: newBot, State: newState}
+
+	// set the try count to 1
 	tries := float64(1)
+
+	// loop forever with exponential backup to connect
 	for err := newServer.Connect(); err != nil; err = newServer.Connect() {
 		duration := time.Duration(math.Pow(2.0, tries)*200) * time.Millisecond
 		log.Println("Unable to connect to", *server, "- waiting", duration)
 		time.Sleep(duration)
 		tries++
 	}
-	newServer.State.Name = *name
-	RegisterCoreHandlers(newServer.Bot, newServer.State)
-	state.RegisterStateHandlers(newServer.Bot, newServer.State)
+
+	// Register the essential handlers
+	RegisterCoreHandlers(newServer.Bot, newState)
+
+	// register the state handlers
+	newState.RegisterStateHandlers(newServer.Bot)
+
+	// start processing callbacks
 	newServer.CallbackLoop()
-	log.Println("Exiting..")
 }

@@ -1,13 +1,23 @@
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/nickvanw/bogon/state"
+)
 
 func init() {
-	AddPlugin("ChanStat", "(?i)^\\.chanstat(s)?$", MessageHandler(ChanStat), false, false)
+	AddPlugin("ChanStat", "(?i)^\\.chanstat(s)?$", MessageHandler(ChanStat), false, true)
 }
 
 func ChanStat(msg *Message) {
-	ch, err := msg.State.GetChan(msg.To)
+	var ch *state.Channel
+	var err error
+	if len(msg.Params) > 1 {
+		ch, err = msg.State.GetChan(msg.Params[1])
+	} else {
+		ch, err = msg.State.GetChan(msg.To)
+	}
 	if err != nil {
 		msg.Return("I couldn't even find this channel, I'm not working well")
 		return

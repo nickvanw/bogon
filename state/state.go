@@ -3,6 +3,7 @@ package state
 import (
 	"errors"
 	"log"
+	"os"
 	"strings"
 	"sync"
 
@@ -18,18 +19,18 @@ var SymbolToRune = map[string]rune{
 	"~": 'q',
 }
 
-func RegisterStateHandlers(bot *ircx.Bot, state *State) {
-	bot.AddCallback(irc.JOIN, ircx.Callback{Handler: &JoinHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.PART, ircx.Callback{Handler: &PartHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.QUIT, ircx.Callback{Handler: &QuitHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.KICK, ircx.Callback{Handler: &KickHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.MODE, ircx.Callback{Handler: &ModeHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.RPL_TOPIC, ircx.Callback{Handler: &TopicHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.RPL_NAMREPLY, ircx.Callback{Handler: &NamesHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.ERR_NICKNAMEINUSE, ircx.Callback{Handler: &NickTakenHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.NICK, ircx.Callback{Handler: &NickHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.INVITE, ircx.Callback{Handler: &InviteHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.NOTICE, ircx.Callback{Handler: &EncryptionHandler{Bot: bot, State: state}})
+func (s *State) RegisterStateHandlers(bot *ircx.Bot) {
+	bot.AddCallback(irc.JOIN, ircx.Callback{Handler: &JoinHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.PART, ircx.Callback{Handler: &PartHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.QUIT, ircx.Callback{Handler: &QuitHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.KICK, ircx.Callback{Handler: &KickHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.MODE, ircx.Callback{Handler: &ModeHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.RPL_TOPIC, ircx.Callback{Handler: &TopicHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.RPL_NAMREPLY, ircx.Callback{Handler: &NamesHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.ERR_NICKNAMEINUSE, ircx.Callback{Handler: &NickTakenHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.NICK, ircx.Callback{Handler: &NickHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.INVITE, ircx.Callback{Handler: &InviteHandler{Bot: bot, State: s}})
+	bot.AddCallback(irc.NOTICE, ircx.Callback{Handler: &EncryptionHandler{Bot: bot, State: s}})
 }
 
 type State struct {
@@ -38,6 +39,12 @@ type State struct {
 	Motd       string
 	Name       string
 	Encryption map[string]string
+	Password   string
+	Admin      string
+}
+
+func (s *State) InitState() {
+	s.Password = os.Getenv("ADMIN_PASS")
 }
 
 type Channel struct {

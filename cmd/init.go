@@ -15,10 +15,12 @@ var (
 )
 
 var (
-	pool *redis.Pool
+	pool     *redis.Pool
+	myConfig string
 )
 
 func InitCommand(config, redis string) {
+	myConfig = config
 	pool = newPool(redis)
 	if err := LoadConfig(config); err != nil {
 		log.Println("Unable to get config file, some commands and features will not work")

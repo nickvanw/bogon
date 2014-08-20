@@ -16,6 +16,10 @@ type CommandHandler struct {
 }
 
 func (cmd *CommandHandler) Handle(s irc.Sender, m *irc.Message) {
+	admin := false
+	if cmd.State.Admin != "" && cmd.State.Password != "" { // if we have an empty password, we NEVER want to auth anyone
+		admin = cmd.State.Admin == m.Prefix.String()
+	}
 	enc := false
 	var to, message string
 	if strings.ContainsAny(m.Params[0], strings.Join([]string{string(irc.Channel), string(irc.Distributed)}, "")) {
@@ -45,12 +49,19 @@ func (cmd *CommandHandler) Handle(s irc.Sender, m *irc.Message) {
 	for _, v := range Commands {
 		data := strings.Split(message, " ")
 		if v.Command.MatchString(data[0]) || v.Raw {
+			if v.RequireAdmin {
+				if !admin {
+					continue
+				}
+			}
 			sendMessage := &Message{
-				Params: data,
-				Sender: s,
-				State:  cmd.State,
-				Enc:    enc,
-				To:     to,
+				Params:  data,
+				Sender:  s,
+				State:   cmd.State,
+				Enc:     enc,
+				To:      to,
+				User:    m.Prefix,
+				IsAdmin: admin,
 			}
 			sendMessage.Name = v.Name
 			go v.Function(sendMessage)
@@ -59,12 +70,14 @@ func (cmd *CommandHandler) Handle(s irc.Sender, m *irc.Message) {
 }
 
 type Message struct {
-	Params []string
-	Sender irc.Sender
-	To     string
-	State  *state.State
-	Name   string
-	Enc    bool
+	Params  []string
+	Sender  irc.Sender
+	To      string
+	State   *state.State
+	Name    string
+	Enc     bool
+	User    *irc.Prefix
+	IsAdmin bool
 }
 
 func (m *Message) Return(out string) {
