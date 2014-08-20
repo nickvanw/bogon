@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"log"
+	"math"
 	"os"
+	"time"
 
 	"github.com/nickvanw/bogon/cmd"
 	"github.com/nickvanw/bogon/state"
@@ -30,8 +32,12 @@ func main() {
 	cmd.InitCommand(*config, *redisServer)
 	*password = os.Getenv("PASS")
 	newServer := Bot{Bot: ircx.WithLogin(*server, *name, *user, *password), State: &state.State{Encryption: map[string]string{}}}
-	if err := newServer.Connect(); err != nil {
-		log.Panicln("Unable to dial IRC Server ", err)
+	tries := float64(1)
+	for err := newServer.Connect(); err != nil; err = newServer.Connect() {
+		duration := time.Duration(math.Pow(2.0, tries)*200) * time.Millisecond
+		log.Println("Unable to connect to", *server, "- waiting", duration)
+		time.Sleep(duration)
+		tries++
 	}
 	newServer.State.Name = *name
 	RegisterCoreHandlers(newServer.Bot, newServer.State)
