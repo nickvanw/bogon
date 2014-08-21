@@ -23,9 +23,3 @@ func (h *JoinHandler) Handle(s irc.Sender, m *irc.Message) {
 		h.State.NewUser(channel, m.Prefix.Name)
 	}
 }
-
-func (s *State) NewChannel(name string) {
-	s.Lock()
-	defer s.Unlock()
-	s.Channels = append(s.Channels, &Channel{Name: name, Modes: make(map[rune]struct{})})
-}

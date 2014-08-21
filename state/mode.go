@@ -35,7 +35,10 @@ func (s *State) ParseModes(modes []string) {
 			plus = false
 		case 'q', 'a', 'o', 'h', 'v':
 			nick := modeArgs[0]
-			user := channel.GetUser(nick)
+			user, err := channel.GetUser(nick)
+			if err != nil {
+				continue
+			}
 			if plus {
 				user.Modes[v] = struct{}{}
 			} else {

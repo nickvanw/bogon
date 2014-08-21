@@ -40,7 +40,7 @@ func main() {
 	newBot := ircx.WithLogin(*server, *name, *user, *password)
 
 	// create the bot's state and initialize it
-	newState := &state.State{Encryption: map[string]string{}, Name: *name}
+	newState := &state.State{Encryption: map[string]string{}, Name: *name, Channels: map[string]*state.Channel{}}
 	newState.InitState()
 
 	// create our combination of bot and state

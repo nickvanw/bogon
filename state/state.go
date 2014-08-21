@@ -2,7 +2,6 @@ package state
 
 import (
 	"errors"
-	"log"
 	"os"
 	"strings"
 	"sync"
@@ -35,7 +34,7 @@ func (s *State) RegisterStateHandlers(bot *ircx.Bot) {
 
 type State struct {
 	sync.Mutex
-	Channels   []*Channel
+	Channels   map[string]*Channel
 	Motd       string
 	Name       string
 	Encryption map[string]string
@@ -48,43 +47,34 @@ func (s *State) InitState() {
 }
 
 type Channel struct {
-	Name  string
 	Topic string
-	Users []*User
+	Users map[string]*User
 	Modes map[rune]struct{}
 }
 
 type User struct {
-	Name  string
 	Modes map[rune]struct{}
 }
 
 func (s *State) GetChan(channel string) (*Channel, error) {
-	for _, chan_try := range s.Channels {
-		if strings.ToLower(chan_try.Name) == strings.ToLower(channel) {
-			return chan_try, nil
-		}
+	if findChannel, ok := s.Channels[strings.ToLower(channel)]; ok {
+		return findChannel, nil
 	}
-	return &Channel{}, errors.New("Not a channel!")
+	return nil, errors.New("Not a channel!")
 }
 
-func (c *Channel) GetUser(name string) *User {
-	for _, user := range c.Users {
-		if strings.ToLower(user.Name) == strings.ToLower(name) {
-			return user
-		}
+func (c *Channel) GetUser(name string) (*User, error) {
+	if findUser, ok := c.Users[strings.ToLower(name)]; ok {
+		return findUser, nil
+	} else {
+		return nil, errors.New("Not a user!")
 	}
-	return &User{}
 }
 
 func (s *State) RemoveChannel(name string) {
 	s.Lock()
 	defer s.Unlock()
-	for num, pchan := range s.Channels {
-		if strings.ToLower(pchan.Name) == strings.ToLower(name) {
-			s.Channels = append(s.Channels[:num], s.Channels[num+1:]...)
-		}
-	}
+	delete(s.Channels, strings.ToLower(name))
 }
 
 func (s *State) RemoveUser(channel string, name string) {
@@ -92,18 +82,13 @@ func (s *State) RemoveUser(channel string, name string) {
 	defer s.Unlock()
 	remChannel, err := s.GetChan(channel)
 	if err != nil {
-		log.Println("I tried to remove a user form a channel I have no record of")
 		return
 	}
-	remChannel.RemoveUser(name)
+	delete(remChannel.Users, strings.ToLower(name))
 }
 
 func (c *Channel) RemoveUser(name string) {
-	for num, user := range c.Users {
-		if strings.ToLower(user.Name) == strings.ToLower(name) {
-			c.Users = append(c.Users[:num], c.Users[num+1:]...)
-		}
-	}
+	delete(c.Users, strings.ToLower(name))
 }
 
 func (s *State) NewUser(channel string, user string) {
@@ -111,20 +96,26 @@ func (s *State) NewUser(channel string, user string) {
 	defer s.Unlock()
 	addChannel, err := s.GetChan(channel)
 	if err != nil {
-		log.Println("User joined a channel I have no record of")
 		return
 	}
 	addChannel.NewUser(user)
 }
 
 func (c *Channel) NewUser(user string) {
+	c.RemoveUser(user)
 	modes := make(map[rune]struct{})
 	switch rune(user[0]) {
 	case '~', '&', '@', '%', '+':
 		modes[SymbolToRune[string(user[0])]] = struct{}{}
 		user = user[1:]
 	}
-	c.Users = append(c.Users, &User{Name: user, Modes: modes})
+	c.Users[strings.ToLower(user)] = &User{Modes: modes}
+}
+
+func (s *State) NewChannel(name string) {
+	s.Lock()
+	defer s.Unlock()
+	s.Channels[strings.ToLower(name)] = &Channel{Modes: make(map[rune]struct{}), Users: map[string]*User{}}
 }
 
 func (c *Channel) Ops() int {
