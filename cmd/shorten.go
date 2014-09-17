@@ -21,7 +21,7 @@ func Shorten(msg *Message) {
         if len(msg.Params) < 2 {
             channel, err := msg.State.GetChan(msg.To)
             if err != nil {
-                msg.Return("No saved last URL for this channel!")
+                msg.Return("Couldn't find the channel I'm in!")
                 return
             }
             longUrl = channel.LastUrl
