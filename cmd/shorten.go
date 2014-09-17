@@ -33,9 +33,7 @@ func Shorten(msg *Message) {
         var si ShortenInfo
         json.Unmarshal(body, &si)
         
-        short := si.Short
-        
-        msg.Return(short)
+        msg.Return(fmt.Sprintf("Shortened URL: %s", si.Short))
 }
 
 type ShortenInfo struct {
