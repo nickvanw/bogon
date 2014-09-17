@@ -28,7 +28,11 @@ func Shorten(msg *Message) {
         }
         defer resp.Body.Close()
         
-        body, _ := ioutil.ReadAll(resp.Body)
+        body, err := ioutil.ReadAll(resp.Body)
+        if err != nil {
+                msg.Return("Error reading data from Google URL Shortener!")
+                return
+        }
         
         var si ShortenInfo
         json.Unmarshal(body, &si)
