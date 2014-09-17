@@ -7,6 +7,7 @@ import (
         "io/ioutil"
         "net/http"
         "strings"
+        "time"
 )
 
 func init() {
@@ -20,7 +21,9 @@ func Shorten(msg *Message) {
         req, err := http.NewRequest("POST", apiUrl, bytes.NewBufferString(jsonOut))
         req.Header.Set("Content-Type", "application/json")
         
-        client := &http.Client{}
+        client := &http.Client{
+                Timeout: time.Second * 3,
+        }
         resp, err := client.Do(req)
         if err != nil {
                 msg.Return("Error contacting Google URL Shortener!")
