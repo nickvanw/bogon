@@ -17,7 +17,19 @@ func init() {
 const apiUrl = "https://www.googleapis.com/urlshortener/v1/url"
 
 func Shorten(msg *Message) {
-        jsonOut := fmt.Sprintf("{\"longUrl\": \"%s\"}", strings.Join(msg.Params[1:], " "))
+        var longUrl string
+        if len(msg.Params) < 2 {
+            channel, err := msg.State.GetChan(msg.To)
+            if err != nil {
+                msg.Return("No saved last URL for this channel!")
+                return
+            }
+            longUrl = channel.LastUrl
+        } else {
+            longUrl = strings.Join(msg.Params[1:], " ")
+        }
+
+        jsonOut := fmt.Sprintf("{\"longUrl\": \"%s\"}", longUrl)
         req, err := http.NewRequest("POST", apiUrl, bytes.NewBufferString(jsonOut))
         req.Header.Set("Content-Type", "application/json")
         
