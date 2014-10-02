@@ -21,5 +21,6 @@ func ChanStat(msg *Message) {
 	numPeople := len(ch.Users)
 	ops := ch.Ops()
 	voice := ch.Voice()
-	msg.Return(fmt.Sprintf("%s: %d people, %d ops, %d voice", channel, numPeople, ops, voice))
+	lastUrl := ch.LastUrl
+	msg.Return(fmt.Sprintf("%s: %d people, %d ops, %d voice, last url %s", channel, numPeople, ops, voice, lastUrl))
 }

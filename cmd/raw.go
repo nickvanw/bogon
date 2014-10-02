@@ -18,6 +18,7 @@ func Raw(msg *Message) {
 	go HandleRedis(msg)
 	go HandleYoutube(msg.Params, msg)
 	go HandleSpotify(msg)
+	go HandleLastUrl(msg)
 }
 
 func HandleRedis(msg *Message) {

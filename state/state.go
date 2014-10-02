@@ -47,9 +47,10 @@ func (s *State) InitState() {
 }
 
 type Channel struct {
-	Topic string
-	Users map[string]*User
-	Modes map[rune]struct{}
+	Topic   string
+	Users   map[string]*User
+	Modes   map[rune]struct{}
+	LastUrl string
 }
 
 type User struct {
