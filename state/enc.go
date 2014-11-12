@@ -15,7 +15,7 @@ type EncryptionHandler struct {
 	State *State
 }
 
-func (h *EncryptionHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *EncryptionHandler) Handle(s ircx.Sender, m *irc.Message) {
 	data := strings.Split(m.Trailing, " ")
 	if len(data) < 2 {
 		return

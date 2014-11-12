@@ -10,7 +10,7 @@ type QuitHandler struct {
 	State *State
 }
 
-func (h *QuitHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *QuitHandler) Handle(s ircx.Sender, m *irc.Message) {
 	h.State.QuitUser(m.Prefix.Name)
 }
 

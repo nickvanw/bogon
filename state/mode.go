@@ -12,7 +12,7 @@ type ModeHandler struct {
 	State *State
 }
 
-func (h *ModeHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *ModeHandler) Handle(s ircx.Sender, m *irc.Message) {
 	h.State.ParseModes(m.Params)
 }
 

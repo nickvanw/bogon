@@ -14,7 +14,7 @@ type NickServHandler struct {
 	State *state.State
 }
 
-func (h *NickServHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *NickServHandler) Handle(s ircx.Sender, m *irc.Message) {
 	username, u_ok := GetConfig("NickservUser")
 	password, p_ok := GetConfig("NickservPass")
 	nickserv, ns_ok := GetConfig("Nickserv")
