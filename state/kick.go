@@ -10,7 +10,7 @@ type KickHandler struct {
 	State *State
 }
 
-func (h *KickHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *KickHandler) Handle(s ircx.Sender, m *irc.Message) {
 	if m.Params[1] == h.State.Name {
 		h.State.RemoveChannel(m.Params[0])
 		if on, ok := h.Bot.Options["rejoin"]; ok && on {

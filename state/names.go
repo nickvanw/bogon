@@ -13,7 +13,7 @@ type NamesHandler struct {
 	State *State
 }
 
-func (h *NamesHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *NamesHandler) Handle(s ircx.Sender, m *irc.Message) {
 	channel, err := h.State.GetChan(m.Params[2])
 	if err != nil {
 		log.Println("I got names for a channel I'm not in")

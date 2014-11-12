@@ -13,7 +13,7 @@ type NickHandler struct {
 	State *State
 }
 
-func (h *NickHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *NickHandler) Handle(s ircx.Sender, m *irc.Message) {
 	if m.Name == h.State.Name {
 		h.State.Name = m.Trailing
 	}
@@ -40,7 +40,7 @@ type NickTakenHandler struct {
 	State *State
 }
 
-func (h *NickTakenHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *NickTakenHandler) Handle(s ircx.Sender, m *irc.Message) {
 	msg := &irc.Message{
 		Command: irc.NICK,
 		Params:  []string{fmt.Sprintf("%s|", h.State.Name)},

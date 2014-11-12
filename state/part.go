@@ -10,7 +10,7 @@ type PartHandler struct {
 	State *State
 }
 
-func (h *PartHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *PartHandler) Handle(s ircx.Sender, m *irc.Message) {
 	if m.Prefix.Name == h.State.Name {
 		h.State.RemoveChannel(m.Params[0])
 	} else {
