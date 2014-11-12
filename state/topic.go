@@ -12,7 +12,7 @@ type TopicHandler struct {
 	State *State
 }
 
-func (h *TopicHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *TopicHandler) Handle(s ircx.Sender, m *irc.Message) {
 	channel, err := h.State.GetChan(m.Params[1])
 	if err != nil {
 		log.Println("Got a topic for a channel I'm not in")

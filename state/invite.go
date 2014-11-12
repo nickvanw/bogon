@@ -10,7 +10,7 @@ type InviteHandler struct {
 	State *State
 }
 
-func (h *InviteHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *InviteHandler) Handle(s ircx.Sender, m *irc.Message) {
 	var channel string
 	if len(m.Params) > 1 {
 		channel = m.Params[1]

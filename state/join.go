@@ -10,7 +10,7 @@ type JoinHandler struct {
 	State *State
 }
 
-func (h *JoinHandler) Handle(s irc.Sender, m *irc.Message) {
+func (h *JoinHandler) Handle(s ircx.Sender, m *irc.Message) {
 	var channel string
 	if len(m.Params) > 0 {
 		channel = m.Params[0]

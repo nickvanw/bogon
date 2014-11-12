@@ -15,7 +15,7 @@ type CommandHandler struct {
 	State *state.State
 }
 
-func (cmd *CommandHandler) Handle(s irc.Sender, m *irc.Message) {
+func (cmd *CommandHandler) Handle(s ircx.Sender, m *irc.Message) {
 	admin := false
 	if cmd.State.Admin != "" && cmd.State.Password != "" { // if we have an empty password, we NEVER want to auth anyone
 		admin = cmd.State.Admin == m.Prefix.String()
@@ -71,7 +71,7 @@ func (cmd *CommandHandler) Handle(s irc.Sender, m *irc.Message) {
 
 type Message struct {
 	Params  []string
-	Sender  irc.Sender
+	Sender  ircx.Sender
 	To      string
 	State   *state.State
 	Name    string
