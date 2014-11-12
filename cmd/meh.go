@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -34,8 +35,8 @@ func GetMeh() (*MehItemOfTheDay, error) {
 		return nil, errors.New("Unable to get to meh.com")
 	}
 
-	i_name := doc.Find("section.features h2").Text()
-	i_price := doc.Find("#hero-buttons button.buy-button span").Text()
+	i_name := strings.TrimSpace(strings.Trim(doc.Find("section.features h2").Text(), "\n"))
+	i_price := strings.TrimSpace(strings.Trim(doc.Find("button.buy-button").Text(), "\n"))
 
 	data := &MehItemOfTheDay{Name: i_name, Price: i_price}
 	return data, nil
