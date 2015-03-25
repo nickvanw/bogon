@@ -18,7 +18,7 @@ func Meh(msg *Message) {
 	}
 
 	client := meh.NewClient(meh.WithKey(key))
-	
+
 	current, err := client.Current()
 	if err != nil {
 		fmt.Println(fmt.Sprintf("Error: %s", err))
