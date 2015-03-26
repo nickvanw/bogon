@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/andreyrd/meh"
+	"github.com/nickvanw/meh"
 )
 
 func init() {
