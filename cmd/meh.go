@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/PuerkitoBio/goquery"
+	"github.com/nickvanw/meh"
 )
 
 func init() {
@@ -13,31 +11,32 @@ func init() {
 }
 
 func Meh(msg *Message) {
-	meh, err := GetMeh()
-	if err != nil {
-		msg.Return(fmt.Sprintf("Error: %s", err))
+	key, avail := GetConfig("Meh")
+	if !avail {
+		fmt.Println("Meh API key not found")
 		return
 	}
-	data := fmt.Sprintf("Meh.com deal of the day: %s for %s", meh.Name, meh.Price)
-	msg.Return(data)
-}
 
-type MehItemOfTheDay struct {
-	// Basic
-	Name  string
-	Price string
-}
+	client := meh.NewClient(meh.WithKey(key))
 
-func GetMeh() (*MehItemOfTheDay, error) {
-	doc, e := goquery.NewDocument("https://meh.com/")
-
-	if e != nil {
-		return nil, errors.New("Unable to get to meh.com")
+	current, err := client.Current()
+	if err != nil {
+		msg.Return("Error contacting Meh API!")
+		return
 	}
 
-	i_name := strings.TrimSpace(strings.Trim(doc.Find("section.features h2").Text(), "\n"))
-	i_price := strings.TrimSpace(strings.Trim(doc.Find("button.buy-button").Text(), "\n"))
+	title := current.Deal.Title
+	price := current.Deal.Items[0].Price
 
-	data := &MehItemOfTheDay{Name: i_name, Price: i_price}
-	return data, nil
+	for i := 0; i < len(current.Deal.Items); i++ {
+		if current.Deal.Items[i].Price != price {
+			// At least one of the prices vary
+			data := fmt.Sprintf("Meh.com deal of the day: %s, varying prices", title)
+			msg.Return(data)
+			return
+		}
+	}
+
+	data := fmt.Sprintf("Meh.com deal of the day: %s for $%d", title, price)
+	msg.Return(data)
 }
