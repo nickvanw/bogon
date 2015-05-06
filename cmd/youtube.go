@@ -8,34 +8,59 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/ixai/iso8601duration"
 )
 
 const timeForm = "2006-01-02T15:04:05.000Z"
 
+const baseUrl = "https://www.googleapis.com/youtube/v3/"
+const videoParts = "contentDetails,snippet,statistics"
+const videoFields = "items(contentDetails(duration),snippet(channelId,publishedAt,title),statistics(viewCount))"
+const chanParts = "snippet"
+const chanFields = "items(snippet(title))"
+
 func GetVideoInfo(id string) (YouTubeVideoResponse, bool) {
-	url := fmt.Sprintf("http://gdata.youtube.com/feeds/api/videos/%s?alt=json", id)
-	data, _ := getSite(url)
-	var videoData YouTubeVideo
-	er := json.Unmarshal(data, &videoData)
-	if er != nil {
+	key, avail := GetConfig("Google")
+	if !avail {
 		return YouTubeVideoResponse{}, false
 	}
-	title := videoData.Entry.Title.T
-	author := videoData.Entry.Author[0].Name.T
-	views, _ := strconv.Atoi(videoData.Entry.Yt_Statistics.ViewCount)
-	views64 := int64(views)
-	length := videoData.Entry.Media_Group.Yt_Duration.Seconds
-	durationString := fmt.Sprintf("%ss", length)
-	duration, _ := time.ParseDuration(durationString)
-	uploadDate := videoData.Entry.Published.T
-	uploadTime, _ := time.Parse(timeForm, uploadDate)
-	response := YouTubeVideoResponse{
-		Title:    title,
-		Author:   author,
-		Views:    views64,
-		Uploaded: uploadTime,
-		Duration: duration,
+
+	videoUrl := fmt.Sprintf("%svideos/?id=%s&key=%s&part=%s&fields=%s", baseUrl, id, key, videoParts, videoFields)
+	vData, _ := getSite(videoUrl)
+
+	var videoData YouTubeVideo
+	err := json.Unmarshal(vData, &videoData)
+	if err != nil || len(videoData.Videos) < 1 {
+		return YouTubeVideoResponse{}, false
 	}
+
+	chanId := videoData.Videos[0].Snippet.ChannelId
+	chanUrl := fmt.Sprintf("%schannels/?id=%s&key=%s&part=%s&fields=%s", baseUrl, chanId, key, chanParts, chanFields)
+	cData, _ := getSite(chanUrl)
+
+	var chanData YouTubeChannel
+	err = json.Unmarshal(cData, &chanData)
+	if err != nil || len(chanData.Channels) < 1 {
+		return YouTubeVideoResponse{}, false
+	}
+
+	title := videoData.Videos[0].Snippet.Title
+	views, _ := strconv.ParseInt(videoData.Videos[0].Statistics.Views, 10, 64)
+	uploadTime, _ := time.Parse(timeForm, videoData.Videos[0].Snippet.Published)
+
+	dur, _ := duration.ParseString(videoData.Videos[0].ContentDetails.Duration)
+	durTime := dur.ToDuration()
+
+	channel := chanData.Channels[0].Snippet.Title
+
+	response := YouTubeVideoResponse{
+		Title:      title,
+		Views:      views,
+		Duration:   durTime,
+		Channel:    channel,
+		UploadTime: uploadTime,
+	}
+
 	return response, true
 }
 
@@ -56,7 +81,7 @@ func HandleYoutube(msg []string, out *Message) {
 }
 
 func FormatYouTube(yt YouTubeVideoResponse) string {
-	msg := fmt.Sprintf("%s | Views: %s | Duration: %s | Uploaded By: %s on %s", yt.Title, humanize.Comma(yt.Views), yt.Duration, yt.Author, yt.Uploaded.Format("Jan 2, 2006"))
+	msg := fmt.Sprintf("%s | Views: %s | Duration: %s | Uploaded By: %s on %s", yt.Title, humanize.Comma(yt.Views), yt.Duration, yt.Channel, yt.UploadTime.Format("Jan 2, 2006"))
 	return msg
 }
 
@@ -69,117 +94,33 @@ func GetYoutube(msg string) (string, bool) {
 }
 
 type YouTubeVideoResponse struct {
-	Title    string
-	Author   string
-	Views    int64
-	Uploaded time.Time
-	Duration time.Duration
+	Title      string
+	Views      int64
+	Duration   time.Duration
+	Channel    string
+	UploadTime time.Time
 }
+
 type YouTubeVideo struct {
-	Encoding string `json:"encoding"`
-	Entry    struct {
-		App_Control struct {
-			Yt_State struct {
-				T          string `json:"$t"`
-				Name       string `json:"name"`
-				ReasonCode string `json:"reasonCode"`
-			} `json:"yt$state"`
-		} `json:"app$control"`
-		Author []struct {
-			Name struct {
-				T string `json:"$t"`
-			} `json:"name"`
-			Uri struct {
-				T string `json:"$t"`
-			} `json:"uri"`
-		} `json:"author"`
-		Category []struct {
-			Scheme string `json:"scheme"`
-			Term   string `json:"term"`
-		} `json:"category"`
-		Content struct {
-			T    string `json:"$t"`
-			Type string `json:"type"`
-		} `json:"content"`
-		Gd_Comments struct {
-			Gd_FeedLink struct {
-				CountHint float64 `json:"countHint"`
-				Href      string  `json:"href"`
-				Rel       string  `json:"rel"`
-			} `json:"gd$feedLink"`
-		} `json:"gd$comments"`
-		Gd_Rating struct {
-			Average   float64 `json:"average"`
-			Max       float64 `json:"max"`
-			Min       float64 `json:"min"`
-			NumRaters float64 `json:"numRaters"`
-			Rel       string  `json:"rel"`
-		} `json:"gd$rating"`
-		ID struct {
-			T string `json:"$t"`
-		} `json:"id"`
-		Link []struct {
-			Href string `json:"href"`
-			Rel  string `json:"rel"`
-			Type string `json:"type"`
-		} `json:"link"`
-		Media_Group struct {
-			Media_Category []struct {
-				T      string `json:"$t"`
-				Label  string `json:"label"`
-				Scheme string `json:"scheme"`
-			} `json:"media$category"`
-			Media_Content []struct {
-				Duration   float64 `json:"duration"`
-				Expression string  `json:"expression"`
-				IsDefault  string  `json:"isDefault"`
-				Medium     string  `json:"medium"`
-				Type       string  `json:"type"`
-				URL        string  `json:"url"`
-				Yt_Format  float64 `json:"yt$format"`
-			} `json:"media$content"`
-			Media_Description struct {
-				T    string `json:"$t"`
-				Type string `json:"type"`
-			} `json:"media$description"`
-			Media_Keywords struct{} `json:"media$keywords"`
-			Media_Player   []struct {
-				URL string `json:"url"`
-			} `json:"media$player"`
-			Media_Thumbnail []struct {
-				Height float64 `json:"height"`
-				Time   string  `json:"time"`
-				URL    string  `json:"url"`
-				Width  float64 `json:"width"`
-			} `json:"media$thumbnail"`
-			Media_Title struct {
-				T    string `json:"$t"`
-				Type string `json:"type"`
-			} `json:"media$title"`
-			Yt_Duration struct {
-				Seconds string `json:"seconds"`
-			} `json:"yt$duration"`
-		} `json:"media$group"`
-		Published struct {
-			T string `json:"$t"`
-		} `json:"published"`
-		Title struct {
-			T    string `json:"$t"`
-			Type string `json:"type"`
-		} `json:"title"`
-		Updated struct {
-			_T string `json:"$t"`
-		} `json:"updated"`
-		Xmlns         string   `json:"xmlns"`
-		Xmlns_App     string   `json:"xmlns$app"`
-		Xmlns_Gd      string   `json:"xmlns$gd"`
-		Xmlns_Media   string   `json:"xmlns$media"`
-		Xmlns_Yt      string   `json:"xmlns$yt"`
-		Yt_Hd         struct{} `json:"yt$hd"`
-		Yt_Statistics struct {
-			FavoriteCount string `json:"favoriteCount"`
-			ViewCount     string `json:"viewCount"`
-		} `json:"yt$statistics"`
-	} `json:"entry"`
-	Version string `json:"version"`
+	Videos []struct {
+		Snippet struct {
+			Title     string `json:"title"`
+			ChannelId string `json:"channelId"`
+			Published string `json:"publishedAt"`
+		} `json:"snippet"`
+		ContentDetails struct {
+			Duration string `json:"duration"`
+		} `json:"contentDetails"`
+		Statistics struct {
+			Views string `json:"viewCount"`
+		} `json:"statistics"`
+	} `json:"items"`
+}
+
+type YouTubeChannel struct {
+	Channels []struct {
+		Snippet struct {
+			Title string `json:"title"`
+		} `json:"snippet"`
+	} `json:"items"`
 }
