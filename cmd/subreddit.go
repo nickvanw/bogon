@@ -33,8 +33,14 @@ func SubReddit(msg *Message) {
 	var rp RedditPage
 	json.Unmarshal(data, &rp)
 
+	postcount := len(rp.Data.Children)
+	if postcount == 0 {
+		msg.Return("This subreddit looks empty!")
+		return
+	}
+
 	rand.Seed(time.Now().UTC().UnixNano())
-	randIndex := rand.Intn(len(rp.Data.Children))
+	randIndex := rand.Intn(postcount)
 
 	redditdata := rp.Data.Children[randIndex].ChildData
 	var out string
