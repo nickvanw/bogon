@@ -9,13 +9,21 @@ import (
 )
 
 func init() {
-	AddPlugin("Wasted", "(?i)^\\.wasted$", MessageHandler(Wasted), false, false)
+	AddPlugin("SubReddit", "(?i)^\\.(sub)?r(eddit)?$", MessageHandler(SubReddit), false, false)
 }
 
-const wastedurl = "http://reddit.com/r/wastedgifs.json"
+const baseurl = "http://reddit.com/r/%s.json"
 
-func Wasted(msg *Message) {
-	data, err := getSite(wastedurl)
+func SubReddit(msg *Message) {
+	if len(msg.Params) < 2 {
+		msg.Return("Give me a subreddit!")
+		return
+	}
+
+	sub := msg.Params[1]
+	url := fmt.Sprintf(baseurl, sub);
+
+	data, err := getSite(url)
 
 	if err != nil {
 		msg.Return("Error getting reddit data!")
@@ -25,25 +33,31 @@ func Wasted(msg *Message) {
 	var rp RedditPage
 	json.Unmarshal(data, &rp)
 
-	rand.Seed(time.Now().UTC().UnixNano())
-	randIndex := rand.Intn(len(rp.Data.Children))
+	postcount := len(rp.Data.Children)
+	if postcount == 0 {
+		msg.Return("This subreddit looks empty!")
+		return
+	}
 
-	wasteddata := rp.Data.Children[randIndex].ChildData
+	rand.Seed(time.Now().UTC().UnixNano())
+	randIndex := rand.Intn(postcount)
+
+	redditdata := rp.Data.Children[randIndex].ChildData
 	var out string
 
-	wasteddata.Url = fixLink(wasteddata.Url)
+	redditdata.Url = fixImgurLink(redditdata.Url)
 
-	if wasteddata.Nsfw {
-		out = fmt.Sprintf("(NSFW) %s: %s", wasteddata.Title, wasteddata.Url)
+	if redditdata.Nsfw {
+		out = fmt.Sprintf("(NSFW) %s: %s", redditdata.Title, redditdata.Url)
 	} else {
-		out = fmt.Sprintf("%s: %s", wasteddata.Title, wasteddata.Url)
+		out = fmt.Sprintf("%s: %s", redditdata.Title, redditdata.Url)
 	}
 
 	msg.Return(out)
 }
 
 // Converts a link to a direct link if it's on imgur
-func fixLink(link string) string {
+func fixImgurLink(link string) string {
 	originalurl, err := url.Parse(link)
 
 	if err != nil || originalurl.Host != "imgur.com" {
