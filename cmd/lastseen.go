@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -16,38 +17,56 @@ func LastSeen(msg *Message) {
 	if len(msg.Params) < 2 {
 		msg.Return("Usage: .last [nick]")
 	} else {
-		nick := msg.Params[1]
-		seen := GetLastSeen(nick)
-
-		msg.Return(fmt.Sprintf("%s was last seen %s", nick, seen))
+		seen := GetLastSeen(msg)
+		msg.Return(fmt.Sprintf("%s was last seen %s", msg.Params[1], seen))
 	}
 }
 
-func GetLastSeen(nick string) string {
+func GetLastSeen(msg *Message) string {
+	nick := msg.Params[1]
+	channel := msg.To
+	key := fmt.Sprintf("%s%s", nick, channel)
+	msgkey := fmt.Sprintf("%s:msg", key)
+
 	conn := pool.Get()
 	defer conn.Close()
-
 	cmd := fmt.Sprintf("%s:%s", PREFIX, "lastseen")
-	seen, err := redis.Int64(conn.Do("hget", cmd, nick))
 
+	seen, err := redis.Int64(conn.Do("hget", cmd, key))
 	if err != nil {
 		return "never"
 	}
+	seenstr := humanize.Time(time.Unix(seen, 0))
 
-	return humanize.Time(time.Unix(seen, 0))
+	lastmsg, err2 := redis.String(conn.Do("hget", cmd, msgkey))
+	if err2 != nil {
+		return seenstr
+	}
+
+	return fmt.Sprintf("%s, \"%s\"", seenstr, lastmsg)
 }
 
 func HandleLastSeen(msg *Message) {
 	nick := msg.User.Name
+	channel := msg.To
+	key := fmt.Sprintf("%s%s", nick, channel)
+	msgkey := fmt.Sprintf("%s:msg", key)
+
 	now := time.Now().Unix()
+	lastmsg := strings.Join(msg.Params, " ")
 
 	conn := pool.Get()
 	defer conn.Close()
-
 	cmd := fmt.Sprintf("%s:%s", PREFIX, "lastseen")
-	_, err := conn.Do("hset", cmd, nick, now)
 
+	_, err := conn.Do("hset", cmd, key, now)
 	if err != nil {
-		fmt.Printf("Could not save last seen timestamp for %s\n", nick)
+		fmt.Printf("Could not save last seen timestamp for %s in %s\n", nick, channel)
+		return
+	}
+
+	_, err = conn.Do("hset", cmd, msgkey, lastmsg)
+	if err != nil {
+		fmt.Printf("Could not save last message for %s in %s\n", nick, channel)
 	}
 }
