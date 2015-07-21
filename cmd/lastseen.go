@@ -38,8 +38,8 @@ func GetLastSeen(msg *Message) string {
 	}
 	seenstr := humanize.Time(time.Unix(seen, 0))
 
-	lastmsg, err2 := redis.String(conn.Do("hget", cmd, msgkey))
-	if err2 != nil {
+	lastmsg, err := redis.String(conn.Do("hget", cmd, msgkey))
+	if err != nil {
 		return seenstr
 	}
 
