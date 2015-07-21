@@ -43,7 +43,7 @@ func GetLastSeen(msg *Message) string {
 		return seenstr
 	}
 
-	return fmt.Sprintf("%s, \"%s\"", seenstr, lastmsg)
+	return fmt.Sprintf("%s, %q", seenstr, lastmsg)
 }
 
 func HandleLastSeen(msg *Message) {
