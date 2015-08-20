@@ -1,9 +1,12 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"strings"
+	"math"
+	"strconv"
+	"time"
+
+	forecast "github.com/mlbright/forecast/v2"
 )
 
 func init() {
@@ -16,56 +19,28 @@ func GetForecast(msg *Message) {
 		msg.Return("I couldn't track down that location!")
 		return
 	}
-	WUNDERGROUND, avail := GetConfig("Wunderground")
+	apikey, avail := GetConfig("Forecast")
 	if avail != true {
-		fmt.Println("wunderground API key not available")
+		fmt.Println("forecast.io API key not available")
 		return
 	}
-	url := fmt.Sprintf("http://api.wunderground.com/api/%s/forecast/q/%v,%v.json", WUNDERGROUND, geoAddr.Lat, geoAddr.Long)
-	data, err := getSite(url)
+
+	lat := strconv.FormatFloat(geoAddr.Lat, 'f', -1, 64)
+	long := strconv.FormatFloat(geoAddr.Long, 'f', -1, 64)
+
+	f, err := forecast.Get(apikey, lat, long, "now", forecast.US)
 	if err != nil {
-		msg.Return("Error!")
+		msg.Return("Unable to fetch forecast!")
 		return
 	}
-	var forecast ForecastConditions
-	json.Unmarshal(data, &forecast)
-	out := make([]string, 0, 3)
-	for _, v := range forecast.Forecast.Simpleforecast.Forecastday {
-		day := fmt.Sprintf("[%v] High: %v°F (%v°C) Low: %v°F (%v°C). %v (%v%% chance precip) with %v mph winds and %v%% humidity", v.Date.Weekday_short, v.High["fahrenheit"], v.High["celsius"], v.Low["fahrenheit"], v.Low["celsius"], v.Conditions, v.Pop, v.Avewind.Mph, v.Avehumidity)
-		out = append(out, day)
+	out := fmt.Sprintf("Forecast: %s", f.Daily.Summary)
+	for i := 0; i < int(math.Min(float64(len(f.Daily.Data)), 3.0)); i++ {
+		data := f.Daily.Data[i]
+		out = fmt.Sprintf("%s | %s: %s [high: %.0fF, low: %.0fF]", out,
+			time.Unix(int64(data.Time), 0).Format("Mon Jan 2"), data.Summary, data.TemperatureMax, data.TemperatureMin)
+		if data.PrecipType != "" {
+			out = fmt.Sprintf("%s; [%.0f%% of %s]", out, data.PrecipProbability*100.0, data.PrecipType)
+		}
 	}
-	msg.Return(strings.Join(out[:3], " | "))
-}
-
-type ForecastConditions struct {
-	Forecast Forecast
-}
-
-type Forecast struct {
-	Simpleforecast Simpleforecast
-}
-
-type Simpleforecast struct {
-	Forecastday []Forecastday
-}
-
-type Forecastday struct {
-	Date        ForecastDate
-	High        map[string]string
-	Low         map[string]string
-	Conditions  string
-	Pop         int
-	Avewind     ForecastWind
-	Avehumidity int
-}
-
-type ForecastDate struct {
-	Weekday_short string
-}
-
-type ForecastWind struct {
-	Mph     int
-	Kph     int
-	Dir     string
-	Degrees int
+	msg.Return(out)
 }
