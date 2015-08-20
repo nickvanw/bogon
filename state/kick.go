@@ -6,14 +6,15 @@ import (
 )
 
 type KickHandler struct {
-	Bot   *ircx.Bot
-	State *State
+	Bot    *ircx.Bot
+	State  *State
+	Rejoin bool
 }
 
 func (h *KickHandler) Handle(s ircx.Sender, m *irc.Message) {
 	if m.Params[1] == h.State.Name {
 		h.State.RemoveChannel(m.Params[0])
-		if on, ok := h.Bot.Options["rejoin"]; ok && on {
+		if h.Rejoin {
 			msg := &irc.Message{
 				Command: irc.JOIN,
 				Params:  []string{m.Params[0]},

@@ -9,12 +9,12 @@ import (
 
 func RegisterCoreHandlers(bot *ircx.Bot, state *state.State) {
 	// Add the initial join and ping handlers
-	bot.AddCallback(irc.RPL_WELCOME, ircx.Callback{Handler: ircx.HandlerFunc(RegisterConnect)})
-	bot.AddCallback(irc.PING, ircx.Callback{Handler: ircx.HandlerFunc(PingHandler)})
+	bot.HandleFunc(irc.RPL_WELCOME, RegisterConnect)
+	bot.HandleFunc(irc.PING, PingHandler)
 
 	// Add the command handler for channel commands
-	bot.AddCallback(irc.PRIVMSG, ircx.Callback{Handler: &cmd.CommandHandler{Bot: bot, State: state}})
-	bot.AddCallback(irc.NOTICE, ircx.Callback{Handler: &cmd.NickServHandler{Bot: bot, State: state}})
+	bot.Handle(irc.PRIVMSG, &cmd.CommandHandler{Bot: bot, State: state})
+	bot.Handle(irc.NOTICE, &cmd.NickServHandler{Bot: bot, State: state})
 }
 
 func PingHandler(s ircx.Sender, m *irc.Message) {
