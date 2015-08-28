@@ -19,17 +19,17 @@ var SymbolToRune = map[string]rune{
 }
 
 func (s *State) RegisterStateHandlers(bot *ircx.Bot) {
-	bot.AddCallback(irc.JOIN, ircx.Callback{Handler: &JoinHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.PART, ircx.Callback{Handler: &PartHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.QUIT, ircx.Callback{Handler: &QuitHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.KICK, ircx.Callback{Handler: &KickHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.MODE, ircx.Callback{Handler: &ModeHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.RPL_TOPIC, ircx.Callback{Handler: &TopicHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.RPL_NAMREPLY, ircx.Callback{Handler: &NamesHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.ERR_NICKNAMEINUSE, ircx.Callback{Handler: &NickTakenHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.NICK, ircx.Callback{Handler: &NickHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.INVITE, ircx.Callback{Handler: &InviteHandler{Bot: bot, State: s}})
-	bot.AddCallback(irc.NOTICE, ircx.Callback{Handler: &EncryptionHandler{Bot: bot, State: s}})
+	bot.Handle(irc.JOIN, &JoinHandler{Bot: bot, State: s})
+	bot.Handle(irc.PART, &PartHandler{Bot: bot, State: s})
+	bot.Handle(irc.QUIT, &QuitHandler{Bot: bot, State: s})
+	bot.Handle(irc.KICK, &KickHandler{Bot: bot, State: s, Rejoin: true})
+	bot.Handle(irc.MODE, &ModeHandler{Bot: bot, State: s})
+	bot.Handle(irc.RPL_TOPIC, &TopicHandler{Bot: bot, State: s})
+	bot.Handle(irc.RPL_NAMREPLY, &NamesHandler{Bot: bot, State: s})
+	bot.Handle(irc.ERR_NICKNAMEINUSE, &NickTakenHandler{Bot: bot, State: s})
+	bot.Handle(irc.NICK, &NickHandler{Bot: bot, State: s})
+	bot.Handle(irc.INVITE, &InviteHandler{Bot: bot, State: s})
+	bot.Handle(irc.NOTICE, &EncryptionHandler{Bot: bot, State: s})
 }
 
 type State struct {

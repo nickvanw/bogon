@@ -64,5 +64,5 @@ func main() {
 	newState.RegisterStateHandlers(newServer.Bot)
 
 	// start processing callbacks
-	newServer.CallbackLoop()
+	newServer.HandleLoop()
 }
