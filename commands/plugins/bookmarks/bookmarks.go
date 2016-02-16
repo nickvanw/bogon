@@ -55,7 +55,7 @@ func (h *Handler) Exports() []commands.RegisterFunc {
 }
 
 func (h *Handler) rawHandler(msg commands.Message, ret commands.MessageFunc) string {
-	if len(msg.Params) == 0 || msg.Params[0][1] != commandPrefix {
+	if len(msg.Params) == 0 || msg.Params[0][1] != commandPrefix[0] {
 		return ""
 	}
 	key := strings.ToLower(msg.Params[0][1:])
