@@ -14,12 +14,24 @@ var (
 	ErrUserNotFound = errors.New("user not found")
 )
 
+type stateConf func(s *MemoryState)
+
+// WithRejoin automatically rejoins channels when kicked
+func WithRejoin() stateConf {
+	return func(s *MemoryState) {
+		s.rejoin = true
+	}
+}
+
 // NewState returns an in-memory state for a single IRC connection
-func NewState(name string) *MemoryState {
+func NewState(name string, conf ...stateConf) *MemoryState {
 	s := &MemoryState{
 		name:       name,
 		encryption: NewEncryption(),
 		Channels:   map[string]*Channel{},
+	}
+	for _, v := range conf {
+		v(s)
 	}
 	return s
 }
@@ -47,6 +59,7 @@ type Channel struct {
 // if the same user overlaps in multiple channels with the connection,
 // there will be multiple User structs in each channel
 type User struct {
+	sync.RWMutex
 	Modes map[rune]struct{}
 }
 
@@ -104,20 +117,16 @@ func (s *MemoryState) RemoveChannel(name string) {
 
 // RemoveUser removes the specified user from the specified channel
 // if they are presen
-func (s *MemoryState) RemoveUser(channel string, name string) {
-	s.Lock()
-	defer s.Unlock()
+func (s *MemoryState) RemoveUser(channel, name string) {
 	remChannel, err := s.GetChan(channel)
 	if err != nil {
 		return
 	}
-	delete(remChannel.Users, strings.ToLower(name))
+	remChannel.RemoveUser(name)
 }
 
 // NewUser registers the user in the specified channel
-func (s *MemoryState) NewUser(channel string, user string) {
-	s.Lock()
-	defer s.Unlock()
+func (s *MemoryState) NewUser(channel, user string) {
 	addChannel, err := s.GetChan(channel)
 	if err != nil {
 		return
@@ -159,8 +168,6 @@ func (s *MemoryState) ParseModes(modes []string) {
 	modeString := modes[1]
 	modeArgs := modes[2:]
 	var plus bool
-	s.Lock()
-	defer s.Unlock()
 	for _, v := range modeString {
 		switch v {
 		case '+':
@@ -173,18 +180,22 @@ func (s *MemoryState) ParseModes(modes []string) {
 			if err != nil {
 				continue
 			}
+			user.Lock()
 			if plus {
 				user.Modes[v] = struct{}{}
 			} else {
 				delete(user.Modes, v)
 			}
+			user.Unlock()
 			modeArgs = modeArgs[1:]
 		default:
+			channel.Lock()
 			if plus {
 				channel.Modes[v] = struct{}{}
 			} else {
 				delete(channel.Modes, v)
 			}
+			channel.Unlock()
 		}
 	}
 }
@@ -215,8 +226,6 @@ func (c *Channel) RemoveUser(name string) {
 
 // NewUser adds one-or-more users to the specified channel
 func (c *Channel) NewUser(users ...string) {
-	c.Lock()
-	defer c.Unlock()
 	for _, user := range users {
 		c.RemoveUser(user)
 		modes := make(map[rune]struct{})
@@ -225,34 +234,8 @@ func (c *Channel) NewUser(users ...string) {
 			modes[symbolToRune[string(user[0])]] = struct{}{}
 			user = user[1:]
 		}
+		c.Lock()
 		c.Users[strings.ToLower(user)] = &User{Modes: modes}
+		c.Unlock()
 	}
-}
-
-// Ops returns the number of operators in the channel
-//todo(nick): do we need this? should we return the list?
-func (c *Channel) Ops() int {
-	c.RLock()
-	defer c.RUnlock()
-	num := 0
-	for _, v := range c.Users {
-		if _, ok := v.Modes['o']; ok {
-			num++
-		}
-	}
-	return num
-}
-
-// Voice returns the number of voiced operators in the channel
-//todo(nick): do we need this? should we return the list?
-func (c *Channel) Voice() int {
-	c.RLock()
-	defer c.RUnlock()
-	num := 0
-	for _, v := range c.Users {
-		if _, ok := v.Modes['v']; ok {
-			num++
-		}
-	}
-	return num
 }

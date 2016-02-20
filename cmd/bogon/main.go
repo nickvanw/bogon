@@ -30,7 +30,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "server, s",
-			Value:  "104.131.63.114:6667",
+			Value:  "swarm-node02.nvw.io:6667",
 			Usage:  "IRC host:port to connect to",
 			EnvVar: "BOGON_SERVER",
 		},
@@ -80,7 +80,7 @@ func realMain(c *cli.Context) {
 	channels := strings.Split(c.String("channels"), ",")
 
 	// Create a new bogon
-	bogon, err := bogon.New(bot, channels)
+	bogon, err := bogon.New(bot, c.String("name"), channels)
 	if err != nil {
 		log.Fatalf("Unable to start new bogon: %s", err)
 	}

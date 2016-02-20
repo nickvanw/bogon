@@ -7,16 +7,22 @@ import (
 
 // Client contains a single IRC bot
 type Client struct {
-	bot   *ircx.Bot
-	state State
+	bot   bot
+	state state
 
 	commands []command
+}
+
+type bot interface {
+	Connect() error
+	HandleLoop()
+	HandleFunc(string, func(s ircx.Sender, m *irc.Message))
 }
 
 // State models all of the interactions an IRC server can have with the state
 // of the client, which is a lot.
 // Any implementation of State should be careful to avoid races
-type State interface {
+type state interface {
 	NewUser(channel string, user string)
 	RemoveUser(channel string, name string)
 	QuitUser(name string)
@@ -36,9 +42,9 @@ type State interface {
 
 // New accepts an underlying ircx connection and a list of channels to join
 // when connected.
-func New(bot *ircx.Bot, channels []string) (*Client, error) {
+func New(bot bot, name string, channels []string) (*Client, error) {
 	client := &Client{bot: bot}
-	client.state = NewState(bot.OriginalName)
+	client.state = NewState(name, WithRejoin())
 	client.registerStateHandlers()
 	client.registerCoreHandlers(channels)
 	return client, nil
