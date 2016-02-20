@@ -64,6 +64,12 @@ func main() {
 			Value:  "bm.bdb",
 			EnvVar: "BOGON_BOOKMARK_FILE",
 		},
+		cli.StringFlag{
+			Name:   "admin, a",
+			Usage:  "location of admin socket",
+			Value:  "",
+			EnvVar: "BOGON_ADMIN_SOCKET",
+		},
 	}
 	app.Run(os.Args)
 }
@@ -102,7 +108,11 @@ func realMain(c *cli.Context) {
 
 	// Set up commands
 	if err := commandSetup(bogon, c); err != nil {
-		log.Fatalf("error setting up commands: %s")
+		log.Fatalf("error setting up commands: %s", err)
+	}
+
+	if cfg := c.String("admin"); cfg != "" {
+		bogon.AdminSocket(cfg)
 	}
 
 	// Connect!

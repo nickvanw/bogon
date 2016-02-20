@@ -1,6 +1,7 @@
 package bogon
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"strings"
@@ -23,10 +24,20 @@ func WithRejoin() stateConf {
 	}
 }
 
+type modes map[rune]struct{}
+
+func (m modes) MarshalJSON() ([]byte, error) {
+	modes := make([]string, 0, len(m))
+	for k := range m {
+		modes = append(modes, string(k))
+	}
+	return json.Marshal(modes)
+}
+
 // NewState returns an in-memory state for a single IRC connection
 func NewState(name string, conf ...stateConf) *MemoryState {
 	s := &MemoryState{
-		name:       name,
+		Nick:       name,
 		encryption: NewEncryption(),
 		Channels:   map[string]*Channel{},
 	}
@@ -39,20 +50,19 @@ func NewState(name string, conf ...stateConf) *MemoryState {
 // MemoryState tracks the state of an IRC connection in memory
 type MemoryState struct {
 	sync.RWMutex
-	Channels   map[string]*Channel
-	Motd       string
+	Channels   map[string]*Channel `json:"channels"`
+	Motd       string              `json:"motd"`
+	Nick       string              `json:"name"`
 	encryption Encryption
-	Admin      string
-	name       string
 	rejoin     bool
 }
 
 // Channel represents a single IRC channel the client is currently in
 type Channel struct {
 	sync.RWMutex
-	Topic string
-	Users map[string]*User
-	Modes map[rune]struct{}
+	Topic string           `json:"topic"`
+	Users map[string]*User `json:"users"`
+	Modes modes            `json:"modes"`
 }
 
 // User represents a single user in a single channel
@@ -60,7 +70,7 @@ type Channel struct {
 // there will be multiple User structs in each channel
 type User struct {
 	sync.RWMutex
-	Modes map[rune]struct{}
+	Modes modes `json:"modes"`
 }
 
 // Encryption returns the underlying encryption tracking
@@ -72,13 +82,13 @@ func (s *MemoryState) Encryption() Encryption {
 func (s *MemoryState) Name() string {
 	s.RLock()
 	defer s.RUnlock()
-	return s.name
+	return s.Nick
 }
 
 // SetName updates the name of the connected client
 func (s *MemoryState) SetName(n string) {
 	s.Lock()
-	s.name = n
+	s.Nick = n
 	s.Unlock()
 }
 

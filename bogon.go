@@ -60,6 +60,12 @@ func (c *Client) Start() {
 	c.bot.HandleLoop()
 }
 
+// AdminSocket starts the admin socket at the specified file in a goroutine
+// if a file exists there, it will automatically be removed
+func (c *Client) AdminSocket(fn string) {
+	go c.adminSocket(fn)
+}
+
 func (c *Client) registerCoreHandlers(channels []string) {
 	c.bot.HandleFunc(irc.RPL_WELCOME, registerConnect(channels))
 	c.bot.HandleFunc(irc.PING, pingHandler)

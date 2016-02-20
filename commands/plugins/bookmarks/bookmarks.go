@@ -32,6 +32,8 @@ func New(d Storage) *Handler {
 	}
 }
 
+// Block records regular expressions that will not be allowed
+// for bookmark names
 func (h *Handler) Block(c map[string]*regexp.Regexp) {
 	for k, v := range c {
 		h.reserved[k] = v
