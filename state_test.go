@@ -120,6 +120,21 @@ func TestBasicState(t *testing.T) {
 			},
 		},
 		{
+			name: "joining a channel creates a channel, sending TOPIC, changing the topic works",
+			data: []*irc.Message{
+				&irc.Message{Prefix: defaultPrefix, Command: "JOIN", Params: []string(nil), Trailing: "#test3", EmptyTrailing: false},
+				&irc.Message{Prefix: serverPrefix, Command: "332", Params: []string{name, "#test3"}, Trailing: "1 2 3 4 5", EmptyTrailing: false},
+				&irc.Message{Prefix: serverPrefix, Command: "TOPIC", Params: []string{"#test3"}, Trailing: "1 2 3 4 5 6", EmptyTrailing: false},
+			},
+			wantState: func() *MemoryState {
+				s := NewState(name, WithRejoin())
+				ch := &Channel{Modes: make(map[rune]struct{}), Users: make(map[string]*User)}
+				ch.Topic = "1 2 3 4 5 6"
+				s.Channels = map[string]*Channel{"#test3": ch}
+				return s
+			},
+		},
+		{
 			name: "joining a channel creates a channel, sending NAMES populates the channel names, KICK removes one of them",
 			data: []*irc.Message{
 				&irc.Message{Prefix: defaultPrefix, Command: "JOIN", Params: []string(nil), Trailing: "#test3", EmptyTrailing: false},

@@ -19,6 +19,7 @@ func (c *Client) registerStateHandlers() {
 	c.bot.HandleFunc(irc.PART, c.partHandler)
 	c.bot.HandleFunc(irc.QUIT, c.quitHandler)
 	c.bot.HandleFunc(irc.RPL_TOPIC, c.topicHandler)
+	c.bot.HandleFunc(irc.TOPIC, c.topicChangeHandler)
 
 	// register handlers for encryption
 	c.bot.HandleFunc(irc.NOTICE, c.encryptionStartHandler)
@@ -115,6 +116,14 @@ func (c *Client) quitHandler(s ircx.Sender, m *irc.Message) {
 
 func (c *Client) topicHandler(s ircx.Sender, m *irc.Message) {
 	channel, err := c.state.GetChan(m.Params[1])
+	if err != nil {
+		return
+	}
+	channel.SetTopic(m.Trailing)
+}
+
+func (c *Client) topicChangeHandler(s ircx.Sender, m *irc.Message) {
+	channel, err := c.state.GetChan(m.Params[0])
 	if err != nil {
 		return
 	}
