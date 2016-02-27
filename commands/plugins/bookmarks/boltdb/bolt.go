@@ -33,11 +33,7 @@ func (b *Bolt) New(key, value string) error {
 }
 
 // Lookup returns the bookmark at the key, and true if it is present
-func (b *Bolt) Lookup(key string) (string, bool) {
-	var (
-		val string
-		ok  bool
-	)
+func (b *Bolt) Lookup(key string) (val string, ok bool) {
 	_ = b.db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket([]byte(bucketName))
 		if bkt == nil {
@@ -63,4 +59,20 @@ func (b *Bolt) Remove(key string) error {
 		return bkt.Delete([]byte(key))
 	})
 	return err
+}
+
+func (b *Bolt) Dump() (out map[string]string, err error) {
+	out = map[string]string{}
+	err = b.db.View(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket([]byte(bucketName))
+		if bkt == nil {
+			return nil // impossible to have a bookmark
+		}
+		bkt.ForEach(func(k, v []byte) error {
+			out[string(k)] = string(v)
+			return nil
+		})
+		return nil
+	})
+	return out, err
 }

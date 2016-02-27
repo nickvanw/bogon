@@ -7,6 +7,7 @@ type Storage interface {
 	New(string, string) error
 	Lookup(string) (string, bool)
 	Remove(string) error
+	Dump() (map[string]string, error)
 }
 
 // MemoryStorage maps bookmark k/v pairs in memory
@@ -43,4 +44,10 @@ func (m *MemoryStorage) Remove(key string) error {
 	delete(m.d, key)
 	m.Unlock()
 	return nil
+}
+
+func (m *MemoryStorage) Dump() (map[string]string, error) {
+	m.RLock()
+	defer m.RUnlock()
+	return m.d, nil
 }

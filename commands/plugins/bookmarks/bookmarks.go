@@ -2,9 +2,12 @@ package bookmarks
 
 import (
 	"fmt"
+	"html/template"
+	"net/http"
 	"regexp"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/nickvanw/bogon/commands"
 )
 
@@ -18,18 +21,24 @@ const (
 type Handler struct {
 	datastore Storage
 	reserved  map[string]*regexp.Regexp
+	tpl       *template.Template
 }
 
 // New returns a new bookmark handler, if a nil Storage is passed it will
 // store them in memory
-func New(d Storage) *Handler {
+func New(d Storage) (*Handler, error) {
 	if d == nil {
 		d = NewMemStorage()
 	}
+	t, err := template.New("t").Parse(tpl)
+	if err != nil {
+		return nil, err
+	}
 	return &Handler{
 		datastore: d,
+		tpl:       t,
 		reserved:  map[string]*regexp.Regexp{},
-	}
+	}, nil
 }
 
 // Block records regular expressions that will not be allowed
@@ -54,6 +63,26 @@ func (h *Handler) Exports() []commands.RegisterFunc {
 		return titlePrefix + "del", r, h.delHandler, commands.Options{}
 	}
 	return []commands.RegisterFunc{rawHandler, newHandler, delHandler}
+}
+
+// Serve is a blocking method that creates and starts a web server at the
+// specified address that serves the entire list of bookmarks being tracked
+func (h *Handler) Serve(addr string) error {
+	r := mux.NewRouter()
+	r.HandleFunc("/", h.webHandler)
+	server := http.Server{
+		Addr:    addr,
+		Handler: r,
+	}
+	return server.ListenAndServe()
+}
+
+func (h *Handler) webHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := h.datastore.Dump()
+	if err != nil {
+		http.Error(w, "Unable to get a bookmark list", 500)
+	}
+	h.tpl.Execute(w, data)
 }
 
 func (h *Handler) rawHandler(msg commands.Message, ret commands.MessageFunc) string {

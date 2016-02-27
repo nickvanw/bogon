@@ -30,7 +30,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:   "server, s",
-			Value:  "swarm-node02.nvw.io:6667",
+			Value:  "chat.freenode.org:6667",
 			Usage:  "IRC host:port to connect to",
 			EnvVar: "BOGON_SERVER",
 		},
@@ -63,6 +63,12 @@ func main() {
 			Usage:  "location of bookmark db.",
 			Value:  "bm.bdb",
 			EnvVar: "BOGON_BOOKMARK_FILE",
+		},
+		cli.StringFlag{
+			Name:   "bm.serve",
+			Usage:  "IP:Port to serve the bookmark viewer",
+			Value:  ":9001",
+			EnvVar: "BOGON_BOOKMARK_SERVER",
 		},
 		cli.StringFlag{
 			Name:   "admin, a",
@@ -139,9 +145,15 @@ func commandSetup(bogon *bogon.Client, c *cli.Context) error {
 		if err != nil {
 			return err
 		}
-		bm := bookmarks.New(db)
+		bm, err := bookmarks.New(db)
+		if err != nil {
+			return err
+		}
 		bogon.AddCommands(bm.Exports()...)
 		bm.Block(bogon.ListCommands())
+		if srv := c.String("bm.serve"); srv != "" {
+			go bm.Serve(srv)
+		}
 	}
 
 	return nil
