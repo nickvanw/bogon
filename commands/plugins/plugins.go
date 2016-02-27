@@ -28,6 +28,7 @@ const (
 	weatherTitle   = "weather"
 	wolframTitle   = "wolfram"
 	waliquorTitle  = "waliquor"
+	gifmeTitle     = "gifme"
 )
 
 // exports is the list of commands for use in this package
@@ -35,7 +36,7 @@ var exports = []commands.RegisterFunc{bitcoinCommand, dnsCommand, ipLookup, waLi
 	ltcCommand, currencyCommand, mehCommand, defineCommand, forecastCommand,
 	redditCommand, stockCommand, subredditCommand, titpCommand, tumblrCommand, urbanCommand,
 	walkscoreCommand, weatherCommand, wikiCommand, wolframCommand, youtube.YoutubeCommand,
-	bing.ImageSearch, bing.BingSearch, spotify.Spotify}
+	bing.ImageSearch, bing.BingSearch, spotify.Spotify, gifmeCommand}
 
 // Exports is used to return the current registered plugin methods
 func Exports() []commands.RegisterFunc {
