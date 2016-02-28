@@ -42,7 +42,6 @@ func convertCurrency(msg commands.Message, ret commands.MessageFunc) string {
 			return ""
 		}
 		if err := updateRates(apikey); err != nil {
-			fmt.Println(err)
 			return "I was unable to update my exchange rates, apologies"
 		}
 	}
