@@ -30,12 +30,8 @@ func gifMe(msg commands.Message, ret commands.MessageFunc) string {
 	}
 	gif, err := client.Random(randQuery)
 	if err != nil {
-		fmt.Println(err)
 		return "Giphy returned an error"
 	}
-	desc := "(No Description)"
-	if gif.Data.Caption != "" {
-		desc = gif.Data.Caption
-	}
-	return fmt.Sprintf("%s: %s - Powered by GIPHY", desc, gif.Data.ImageURL)
+
+	return fmt.Sprintf("%s - Powered by GIPHY", gif.Data.ImageURL)
 }
