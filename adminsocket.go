@@ -14,7 +14,7 @@ import (
 
 func (c *Client) adminSocket(fn string) error {
 	_ = os.Remove(fn)
-	l, err := net.ListenUnix("unix", &net.UnixAddr{fn, "unix"})
+	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: fn, Net: "unix"})
 	if err != nil {
 		return err
 	}

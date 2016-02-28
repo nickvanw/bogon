@@ -61,6 +61,8 @@ func (b *Bolt) Remove(key string) error {
 	return err
 }
 
+// Dump loops through all of the keys and creates a stringmap of
+// all of the current bookmarks
 func (b *Bolt) Dump() (out map[string]string, err error) {
 	out = map[string]string{}
 	err = b.db.View(func(tx *bolt.Tx) error {

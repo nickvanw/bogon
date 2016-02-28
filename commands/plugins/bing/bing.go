@@ -1,7 +1,6 @@
 package bing
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -41,7 +40,6 @@ func bingProcess(msg commands.Message, ret commands.MessageFunc, p bingProcesser
 	query := strings.Join(msg.Params[1:], " ")
 	out, err := bingAPIFetch(query, token, p)
 	if err != nil {
-		fmt.Println(err)
 		return "Unable to execute that search, sorry!"
 	}
 	return out

@@ -46,6 +46,7 @@ func (m *MemoryStorage) Remove(key string) error {
 	return nil
 }
 
+// Dump returns a map of all of the bookmarks
 func (m *MemoryStorage) Dump() (map[string]string, error) {
 	m.RLock()
 	defer m.RUnlock()
