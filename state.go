@@ -3,7 +3,6 @@ package bogon
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"strings"
 	"sync"
 )
@@ -38,6 +37,7 @@ func (m modes) MarshalJSON() ([]byte, error) {
 func NewState(name string, conf ...stateConf) *MemoryState {
 	s := &MemoryState{
 		Nick:       name,
+		Modes:      make(modes),
 		encryption: NewEncryption(),
 		Channels:   map[string]*Channel{},
 	}
@@ -53,6 +53,7 @@ type MemoryState struct {
 	Channels   map[string]*Channel `json:"channels"`
 	Motd       string              `json:"motd"`
 	Nick       string              `json:"name"`
+	Modes      modes               `json:"user_modes"`
 	encryption Encryption
 	rejoin     bool
 }
@@ -168,11 +169,10 @@ func (s *MemoryState) RenameUser(oldname, newname string) {
 
 // ParseModes returns the modes that are prepended to a user
 // such as o/v
-func (s *MemoryState) ParseModes(modes []string) {
+func (s *MemoryState) ParseModes(modes []string, trail string) {
 	channel, err := s.GetChan(modes[0])
 	if err != nil {
-		// todo(nick): These are modes for myself
-		log.Println("I got modes for a channel I am not in")
+		s.userModes(modes, trail)
 		return
 	}
 	modeString := modes[1]
@@ -210,6 +210,30 @@ func (s *MemoryState) ParseModes(modes []string) {
 	}
 }
 
+func (s *MemoryState) userModes(name []string, trail string) {
+	if len(name) != 1 || name[0] != s.Nick {
+		// edge case ahoy!
+		return
+	}
+	var plus bool
+	for _, v := range trail {
+		switch v {
+		case '+':
+			plus = true
+		case '-':
+			plus = false
+		default:
+			s.Lock()
+			if plus {
+				s.Modes[v] = struct{}{}
+			} else {
+				delete(s.Modes, v)
+			}
+			s.Unlock()
+		}
+	}
+}
+
 // SetTopic sets the topic of the specified channel
 func (c *Channel) SetTopic(topic string) {
 	c.Lock()
@@ -237,6 +261,9 @@ func (c *Channel) RemoveUser(name string) {
 // NewUser adds one-or-more users to the specified channel
 func (c *Channel) NewUser(users ...string) {
 	for _, user := range users {
+		if len(user) == 0 {
+			continue
+		}
 		c.RemoveUser(user)
 		modes := make(map[rune]struct{})
 		switch rune(user[0]) {

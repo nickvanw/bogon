@@ -35,7 +35,7 @@ type state interface {
 	Name() string
 	SetName(newname string)
 
-	ParseModes(modes []string)
+	ParseModes(modes []string, trail string)
 	Encryption() Encryption
 	Rejoin() bool
 }
