@@ -73,7 +73,7 @@ func (c *Client) kickHandler(s ircx.Sender, m *irc.Message) {
 }
 
 func (c *Client) modeHandler(s ircx.Sender, m *irc.Message) {
-	c.state.ParseModes(m.Params)
+	c.state.ParseModes(m.Params, m.Trailing)
 }
 
 func (c *Client) namesHandler(s ircx.Sender, m *irc.Message) {
