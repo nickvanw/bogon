@@ -10,10 +10,9 @@ import (
 	"net/url"
 
 	"github.com/dchest/uniuri"
+	"github.com/nickvanw/bogon/commands/config"
 	"github.com/nickvanw/bogon/commands/util"
 )
-
-const bucketName = "img"
 
 type bingProcesser interface {
 	sType() string
@@ -92,7 +91,12 @@ func (bingImageProcess) process(data []byte) (string, error) {
 	} else {
 		name += extention[0]
 	}
-	url, err := util.UploadWithEnv(bucketName, name, img.ContentType, resp.Body)
+	bucketName, bucketCfg := config.Get("BING_S3_BUCKET")
+	awsRegion, regionCfg := config.Get("BING_S3_REGION")
+	if !bucketCfg || !regionCfg {
+		return "", errors.New("invalid bucket/region to upload")
+	}
+	url, err := util.UploadWithEnv(bucketName, awsRegion, name, img.ContentType, resp.Body)
 	if err != nil {
 		return "", err
 	}
