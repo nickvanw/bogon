@@ -32,7 +32,7 @@ func fetchForecast(msg commands.Message, ret commands.MessageFunc) string {
 	lat := strconv.FormatFloat(geoAddr.Lat, 'f', -1, 64)
 	long := strconv.FormatFloat(geoAddr.Long, 'f', -1, 64)
 
-	f, err := forecast.Get(apikey, lat, long, "now", forecast.US)
+	f, err := forecast.Get(apikey, lat, long, "now", forecast.US, forecast.English)
 	if err != nil {
 		return "Unable to fetch forecast!"
 	}
