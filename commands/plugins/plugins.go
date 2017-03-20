@@ -9,6 +9,7 @@ import (
 
 // Names of commands exported
 const (
+	bsTitle        = "bs"
 	btcTitle       = "btc"
 	currencyTitle  = "currency"
 	defineTitle    = "define"
@@ -32,8 +33,8 @@ const (
 )
 
 // exports is the list of commands for use in this package
-var exports = []commands.RegisterFunc{bitcoinCommand, dnsCommand, ipLookup, waLiquor,
-	ltcCommand, currencyCommand, mehCommand, defineCommand, forecastCommand,
+var exports = []commands.RegisterFunc{bsCommand, bitcoinCommand, dnsCommand, ipLookup,
+	waLiquor, ltcCommand, currencyCommand, mehCommand, defineCommand, forecastCommand,
 	redditCommand, stockCommand, subredditCommand, titpCommand, tumblrCommand, urbanCommand,
 	walkscoreCommand, weatherCommand, wikiCommand, wolframCommand, youtube.YoutubeCommand,
 	bing.ImageSearch, bing.BingSearch, spotify.Spotify, gifmeCommand}
