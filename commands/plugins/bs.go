@@ -28,12 +28,10 @@ func bsGenerate(msg commands.Message, ret commands.MessageFunc) string {
 	adverb := adverbs[adverbIndex]
 
 	// Choose a random verb
-	rand.Seed(time.Now().UTC().UnixNano())
 	verbIndex := rand.Intn(len(verbs))
 	verb := verbs[verbIndex]
 
 	// Choose a random
-	rand.Seed(time.Now().UTC().UnixNano())
 	nounIndex := rand.Intn(len(nouns))
 	noun := nouns[nounIndex]
 
