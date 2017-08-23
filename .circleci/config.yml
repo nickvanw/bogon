@@ -3,8 +3,12 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.8
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    working_directory: /go/src/github.com/nickvanw/bogon
     steps:
       - checkout
       - run: go get -v -t -d ./...
       - run: go test -v ./...
+      - run: cd cmd/bogon && go build
+      - store_artifacts:
+          path: /go/src/github.com/nickvanw/bogon/cmd/bogon/bogon
+          destination: bogon
