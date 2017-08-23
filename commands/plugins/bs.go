@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/andreyrd/bogon/commands"
+	"github.com/nickvanw/bogon/commands"
 )
 
 var bsCommand = func() (string, *regexp.Regexp, commands.CommandFunc, commands.Options) {
