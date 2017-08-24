@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"mime"
 	"net/http"
 	"net/url"
 
@@ -16,19 +15,19 @@ import (
 
 type bingProcesser interface {
 	sType() string
+	sParams() string
 	process(data []byte) (string, error)
 }
 
 func bingAPIFetch(query, token string, p bingProcesser) (string, error) {
-	url := fmt.Sprintf("https://api.datamarket.azure.com/Bing/Search/%s?$format=json&Adult=%%27Off%%27&$top=1&Query=%%27%s%%27",
-		p.sType(), url.QueryEscape(query))
+	url := fmt.Sprintf("https://api.cognitive.microsoft.com/bing/v5.0/%s?safeSearch=Off&count=1&q=%s", p.sType(), url.QueryEscape(query))
 	client := new(http.Client)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err
 	}
-	req.SetBasicAuth(token, token)
+	req.Header.Set("Ocp-Apim-Subscription-Key", token)
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
@@ -46,11 +45,19 @@ type bingSearchProcess struct{}
 type bingImageProcess struct{}
 
 func (bingImageProcess) sType() string {
-	return "Image"
+	return "/images/search"
 }
 
 func (bingSearchProcess) sType() string {
-	return "Web"
+	return "/search"
+}
+
+func (bingImageProcess) sParams() string {
+	return ""
+}
+
+func (bingSearchProcess) sParams() string {
+	return "&responseFilter=Webpages"
 }
 
 func (bingSearchProcess) process(data []byte) (string, error) {
@@ -58,10 +65,10 @@ func (bingSearchProcess) process(data []byte) (string, error) {
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return "", err
 	}
-	if len(resp.D.Results) < 1 {
+	if len(resp.WebPages.Value) < 1 {
 		return "", errors.New("no results")
 	}
-	out := fmt.Sprintf("%s: %s", resp.D.Results[0].Title, resp.D.Results[0].URL)
+	out := fmt.Sprintf("%s: %s", resp.WebPages.Value[0].Name, resp.WebPages.Value[0].URL)
 	return out, nil
 }
 
@@ -70,12 +77,12 @@ func (bingImageProcess) process(data []byte) (string, error) {
 	if err := json.Unmarshal(data, &api); err != nil {
 		return "", err
 	}
-	if len(api.D.Results) == 0 {
+	if len(api.Value) == 0 {
 		return "", errors.New("no results")
 	}
-	img := api.D.Results[0]
+	img := api.Value[0]
 	client := new(http.Client)
-	req, err := http.NewRequest("GET", img.MediaURL, nil)
+	req, err := http.NewRequest("GET", img.ContentURL, nil)
 	if err != nil {
 		return "", err
 	}
@@ -85,18 +92,13 @@ func (bingImageProcess) process(data []byte) (string, error) {
 	}
 	defer resp.Body.Close()
 	name := uniuri.NewLen(10)
-	extention, err := mime.ExtensionsByType(img.ContentType)
-	if err != nil || len(extention) == 0 {
-		name += ".png" // browser should pick up on it anyway
-	} else {
-		name += extention[0]
-	}
+	name += fmt.Sprintf(".%s", img.EncodingFormat) // EncodingFormat is jpeg/png/etc.
 	bucketName, bucketCfg := config.Get("BING_S3_BUCKET")
 	awsRegion, regionCfg := config.Get("BING_S3_REGION")
 	if !bucketCfg || !regionCfg {
 		return "", errors.New("invalid bucket/region to upload")
 	}
-	url, err := util.UploadWithEnv(bucketName, awsRegion, name, img.ContentType, resp.Body)
+	url, err := util.UploadWithEnv(bucketName, awsRegion, name, img.EncodingFormat, resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -104,19 +106,17 @@ func (bingImageProcess) process(data []byte) (string, error) {
 }
 
 type searchResponse struct {
-	D struct {
-		Results []struct {
-			Title string `json:"Title"`
-			URL   string `json:"Url"`
-		} `json:"results"`
-	} `json:"d"`
+	WebPages struct {
+		Value []struct {
+			Name string `json:"name"`
+			URL  string `json:"displayUrl"`
+		} `json:"value"`
+	} `json:"webPages"`
 }
 
 type imageResponse struct {
-	D struct {
-		Results []struct {
-			ContentType string `json:"ContentType"`
-			MediaURL    string `json:"MediaUrl"`
-		} `json:"results"`
-	} `json:"d"`
+	Value []struct {
+		ContentURL     string `json:"contentUrl"`
+		EncodingFormat string `json:"encodingFormat"`
+	} `json:"value"`
 }
