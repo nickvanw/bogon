@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/nickvanw/bogon/commands/util"
 )
+
+var spotify = new(spotifyAuth)
 
 func artistLookup(key string) string {
 	fullURL := fmt.Sprintf("%s/%s/%s", lookupURL, "artists", key)
-	data, err := util.Fetch(fullURL)
+	data, err := spotify.fetch(fullURL)
 	if err != nil {
 		return ""
 	}
@@ -31,7 +31,7 @@ type spotifyArtist struct {
 
 func albumLookup(key string) string {
 	fullURL := fmt.Sprintf("%s/%s/%s", lookupURL, "albums", key)
-	data, err := util.Fetch(fullURL)
+	data, err := spotify.fetch(fullURL)
 	if err != nil {
 		return ""
 	}
@@ -58,7 +58,7 @@ type spotifyAlbum struct {
 
 func trackLookup(key string) string {
 	fullURL := fmt.Sprintf("%s/%s/%s", lookupURL, "tracks", key)
-	data, err := util.Fetch(fullURL)
+	data, err := spotify.fetch(fullURL)
 	if err != nil {
 		return ""
 	}
