@@ -40,7 +40,7 @@ func bingProcess(msg commands.Message, ret commands.MessageFunc, p bingProcesser
 	query := strings.Join(msg.Params[1:], " ")
 	out, err := bingAPIFetch(query, token, p)
 	if err != nil {
-		return "Unable to execute that search, sorry!"
+		return "Unable to execute that search, sorry."
 	}
 	return out
 }

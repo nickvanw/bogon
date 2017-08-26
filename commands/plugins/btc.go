@@ -18,26 +18,27 @@ func bitCoin(_ commands.Message, ret commands.MessageFunc) string {
 	out := "BTC -> USD:"
 	ch := make(chan string)
 	go getBitstamp(ch)
-	go getBTCE(ch)
-	for i := 0; i < 2; i++ {
+	go getCoinbase(ch)
+	go getCoinMarket(ch)
+	for i := 0; i < 3; i++ {
 		val := <-ch
 		out += " " + val
 	}
 	return out
 }
 
-func getBTCE(ch chan string) {
-	btce, err := util.Fetch("https://btc-e.com/api/2/btc_usd/ticker")
+func getCoinbase(ch chan string) {
+	btce, err := util.Fetch("https://api.coindesk.com/v1/bpi/currentprice.json")
 	if err != nil {
-		ch <- fmt.Sprintf("[%s]: BTC-E Error!", util.Bold("BTC-E"))
+		ch <- fmt.Sprintf("[%s]: Coinbase Error!", util.Bold("Coinbase"))
 	}
 
-	var response btceResponse
+	var response coinbaseResponse
 	if err := json.Unmarshal(btce, &response); err != nil {
-		ch <- fmt.Sprintf("[%s]: BTC-E Error!", util.Bold("BTC-E"))
+		ch <- fmt.Sprintf("[%s]: Coinbase Error!", util.Bold("Coinbase"))
 		return
 	}
-	out := fmt.Sprintf("[%s]: Last: $%v, High: $%v, Low: $%v, Avg: $%v", util.Bold("BTC-E"), response.Ticker.Last, response.Ticker.High, response.Ticker.Low, response.Ticker.Avg)
+	out := fmt.Sprintf("[%s]: Current Rate: $%s", util.Bold("Coinbase"), response.Bpi.USD.Rate)
 	ch <- out
 }
 
@@ -56,6 +57,21 @@ func getBitstamp(ch chan string) {
 	ch <- out
 }
 
+func getCoinMarket(ch chan string) {
+	data, err := util.Fetch("https://api.coinmarketcap.com/v1/ticker/bitcoin/")
+	if err != nil {
+		ch <- fmt.Sprintf("[%s]: CMK Error!", util.Bold("CMK"))
+		return
+	}
+	var response coinMarketCapResponse
+	if err := json.Unmarshal(data, &response); err != nil {
+		ch <- fmt.Sprintf("[%s]: CMK Error!", util.Bold("CMK"))
+		return
+	}
+	out := fmt.Sprintf("[%s] Current Rate: $%s", util.Bold("CMK"), response[0].PriceUsd)
+	ch <- out
+}
+
 type bitstampResponse struct {
 	Ask       string `json:"ask"`
 	Bid       string `json:"bid"`
@@ -66,17 +82,16 @@ type bitstampResponse struct {
 	Volume    string `json:"volume"`
 }
 
-type btceResponse struct {
-	Ticker struct {
-		Avg        float64 `json:"avg"`
-		Buy        float64 `json:"buy"`
-		High       float64 `json:"high"`
-		Last       float64 `json:"last"`
-		Low        float64 `json:"low"`
-		Sell       float64 `json:"sell"`
-		ServerTime float64 `json:"server_time"`
-		Updated    float64 `json:"updated"`
-		Vol        float64 `json:"vol"`
-		VolCur     float64 `json:"vol_cur"`
-	} `json:"ticker"`
+type coinbaseResponse struct {
+	Bpi struct {
+		USD struct {
+			Code   string `json:"code"`
+			Symbol string `json:"symbol"`
+			Rate   string `json:"rate"`
+		} `json:"USD"`
+	} `json:"bpi"`
+}
+
+type coinMarketCapResponse []struct {
+	PriceUsd string `json:"price_usd"`
 }
