@@ -31,7 +31,7 @@ var YoutubeCommand = func() (string, *regexp.Regexp, commands.CommandFunc, comma
 }
 
 func handleYT(msg commands.Message, ret commands.MessageFunc) string {
-	r := regexp.MustCompile(`(?i)[v=|\/]([\w-]+)(&.+)?$`)
+	r := regexp.MustCompile(`(?i)(?:v=|\/)(([\w-]+){11})`)
 	vid := 0
 	for _, v := range msg.Params {
 		match := r.FindAllStringSubmatch(v, -1)
