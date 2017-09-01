@@ -3,6 +3,7 @@ package plugins
 import (
 	"github.com/nickvanw/bogon/commands"
 	"github.com/nickvanw/bogon/commands/plugins/bing"
+	"github.com/nickvanw/bogon/commands/plugins/reddit"
 	"github.com/nickvanw/bogon/commands/plugins/spotify"
 	"github.com/nickvanw/bogon/commands/plugins/youtube"
 )
@@ -36,7 +37,7 @@ const (
 // exports is the list of commands for use in this package
 var exports = []commands.RegisterFunc{bsCommand, bitcoinCommand, dnsCommand, ipLookup,
 	waLiquor, ltcCommand, currencyCommand, mehCommand, defineCommand, forecastCommand,
-	redditCommand, stockCommand, subredditCommand, titpCommand, tumblrCommand, urbanCommand,
+	reddit.RedditUser, reddit.RedditSub, stockCommand, titpCommand, tumblrCommand, urbanCommand,
 	walkscoreCommand, weatherCommand, wikiCommand, wolframCommand, youtube.YoutubeCommand,
 	bing.ImageSearch, bing.BingSearch, spotify.Spotify, gifmeCommand, ethCommand}
 
