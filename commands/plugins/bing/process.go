@@ -20,7 +20,7 @@ type bingProcesser interface {
 }
 
 func bingAPIFetch(query, token string, p bingProcesser) (string, error) {
-	url := fmt.Sprintf("https://api.cognitive.microsoft.com/bing/v5.0/%s?safeSearch=Off&count=1&q=%s", p.sType(), url.QueryEscape(query))
+	url := fmt.Sprintf("https://api.cognitive.microsoft.com/bing/v7.0/%s?safeSearch=Off&count=1&q=%s", p.sType(), url.QueryEscape(query))
 	client := new(http.Client)
 
 	req, err := http.NewRequest("GET", url, nil)
