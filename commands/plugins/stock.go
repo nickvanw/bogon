@@ -1,14 +1,20 @@
 package plugins
 
 import (
-	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"regexp"
-	"strings"
+	"sort"
+	"time"
 
+	"github.com/cmckee-dev/go-alpha-vantage/timeseries"
+	humanize "github.com/dustin/go-humanize"
 	"github.com/nickvanw/bogon/commands"
-	"github.com/nickvanw/bogon/commands/util"
+	"github.com/nickvanw/bogon/commands/config"
+	"golang.org/x/text/message"
 )
+
+const intradayTimeFormat = "2006-01-02 15:04:05"
 
 var stockCommand = func() (string, *regexp.Regexp, commands.CommandFunc, commands.Options) {
 	out := regexp.MustCompile("(?i)^\\.stock$")
@@ -16,23 +22,74 @@ var stockCommand = func() (string, *regexp.Regexp, commands.CommandFunc, command
 }
 
 func stockLookup(msg commands.Message, ret commands.MessageFunc) string {
-	stock := strings.Join(msg.Params[1:], "%20")
-	url := fmt.Sprintf("http://download.finance.yahoo.com/d/quotes.csv?s=%s&f=snl1abcghm6m8", stock)
-	webdata, err := util.Fetch(url)
-	if err != nil {
-		return "Error fetching that stock!"
+	AV_KEY, ok := config.Get("ALPHAVANTAGE_API")
+	if !ok {
+		return "I have not been properly configured for this feature"
 	}
-	reader := strings.NewReader(string(webdata))
-	csvReader := csv.NewReader(reader)
-	csvData, err := csvReader.ReadAll()
-	if err != nil || len(csvData) < 1 {
-		return "Error fetching that stock!"
-	}
-	data := csvData[0]
-	if string(data[3]) == "N/A" && string(data[4]) == "N/A" && string(data[6]) == "N/A" {
-		return "Invalid Stock!"
-	}
-	return fmt.Sprintf("%s (%s): Last: $%s | Ask: $%s | Bid: $%s | Change: %s | Day Low: %s | Day High: %s | %s Last 200 days | %s Last 50 days",
-		data[1], data[0], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9])
+	client := timeseries.NewClient(AV_KEY)
 
+	resp, err := client.Intraday(msg.Params[1])
+	defer resp.Body.Close()
+	if err != nil {
+		return "Unable to fetch that stock"
+	}
+
+	var quotes stockResponseIntra
+	if err := json.NewDecoder(resp.Body).Decode(&quotes); err != nil {
+		return "The response given was not what I expected"
+	}
+
+	loc, err := time.LoadLocation(quotes.MetaData.FiveTimeZone)
+	if err != nil {
+		return "Error parsing the timezone on that response"
+	}
+
+	var data []time.Time
+	for k := range quotes.TimeSeries {
+		stockTime, _ := time.ParseInLocation(intradayTimeFormat, k, loc)
+		data = append(data, stockTime)
+	}
+
+	sort.Slice(data, func(i int, j int) bool {
+		return data[j].Before(data[i])
+	})
+
+	firstQuote := data[0].Format(intradayTimeFormat)
+	firstQuotePretty := humanize.Time(data[0])
+	firstData := quotes.TimeSeries[firstQuote]
+
+	p := message.NewPrinter(message.MatchLanguage("en"))
+	currentInfo := p.Sprintf("Open: %.2f | High: %.2f | Low: %.2f | Close: %.2f",
+		firstData.Open, firstData.High, firstData.Low, firstData.Close)
+
+	return fmt.Sprintf("[%s]: %s [quote from %s]",
+		quotes.MetaData.TwoSymbol, currentInfo, firstQuotePretty)
+}
+
+type stockResponseDaily struct {
+	stockMetaData
+	TimeSeries map[string]stockQuote `json:"Time Series (Daily)"`
+}
+
+type stockResponseIntra struct {
+	stockMetaData
+	TimeSeries map[string]stockQuote `json:"Time Series (15min)"`
+}
+
+type stockMetaData struct {
+	MetaData struct {
+		OneInformation     string `json:"1. Information"`
+		TwoSymbol          string `json:"2. Symbol"`
+		ThreeLastRefreshed string `json:"3. Last Refreshed"`
+		FourOutputSize     string `json:"4. Output Size"`
+		FiveTimeZone       string `json:"5. Time Zone"`
+	} `json:"Meta Data"`
+}
+
+type stockQuote struct {
+	Open   float64 `json:"1. open,string"`
+	High   float64 `json:"2. high,string"`
+	Low    float64 `json:"3. low,string"`
+	Close  float64 `json:"4. close,string"`
+	Volume int     `json:"5. volume,string"`
 }
