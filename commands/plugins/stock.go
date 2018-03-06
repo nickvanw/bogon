@@ -4,17 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"sort"
-	"time"
 
-	"github.com/cmckee-dev/go-alpha-vantage/timeseries"
-	humanize "github.com/dustin/go-humanize"
 	"github.com/nickvanw/bogon/commands"
-	"github.com/nickvanw/bogon/commands/config"
+	"github.com/nickvanw/bogon/commands/util"
 	"golang.org/x/text/message"
 )
 
-const intradayTimeFormat = "2006-01-02 15:04:05"
+const apiURL = "https://api.iextrading.com/1.0/stock/%s/book"
 
 var stockCommand = func() (string, *regexp.Regexp, commands.CommandFunc, commands.Options) {
 	out := regexp.MustCompile("(?i)^\\.stock$")
@@ -22,74 +18,68 @@ var stockCommand = func() (string, *regexp.Regexp, commands.CommandFunc, command
 }
 
 func stockLookup(msg commands.Message, ret commands.MessageFunc) string {
-	AV_KEY, ok := config.Get("ALPHAVANTAGE_API")
-	if !ok {
-		return "I have not been properly configured for this feature"
-	}
-	client := timeseries.NewClient(AV_KEY)
+	dataURL := fmt.Sprintf(apiURL, msg.Params[1])
 
-	resp, err := client.Intraday(msg.Params[1])
-	defer resp.Body.Close()
+	data, err := util.Fetch(dataURL)
 	if err != nil {
-		return "Unable to fetch that stock"
+		return err.Error()
 	}
 
-	var quotes stockResponseIntra
-	if err := json.NewDecoder(resp.Body).Decode(&quotes); err != nil {
-		return "The response given was not what I expected"
+	var response stockQuote
+	if err := json.Unmarshal(data, &response); err != nil {
+		return "I got invalid data for that quote"
 	}
-
-	loc, err := time.LoadLocation(quotes.MetaData.FiveTimeZone)
-	if err != nil {
-		return "Error parsing the timezone on that response"
-	}
-
-	var data []time.Time
-	for k := range quotes.TimeSeries {
-		stockTime, _ := time.ParseInLocation(intradayTimeFormat, k, loc)
-		data = append(data, stockTime)
-	}
-
-	sort.Slice(data, func(i int, j int) bool {
-		return data[j].Before(data[i])
-	})
-
-	firstQuote := data[0].Format(intradayTimeFormat)
-	firstQuotePretty := humanize.Time(data[0])
-	firstData := quotes.TimeSeries[firstQuote]
 
 	p := message.NewPrinter(message.MatchLanguage("en"))
-	currentInfo := p.Sprintf("Open: %.2f | High: %.2f | Low: %.2f | Close: %.2f",
-		firstData.Open, firstData.High, firstData.Low, firstData.Close)
+	return p.Sprintf("%s (%s): Latest Price: %.2f (from '%s' at %s) | Open: %.2f | Close: %.2f | Change: %.2f (%.2f%%) | 52 Week High: %.2f | 52 Week Low: %.2f | YTD Change: %.2f%%",
+		response.Quote.Symbol, response.Quote.CompanyName, response.Quote.LatestPrice,
+		response.Quote.LatestSource, response.Quote.LatestTime, response.Quote.Open,
+		response.Quote.Close, response.Quote.Change, response.Quote.ChangePercent,
+		response.Quote.Week52High, response.Quote.Week52Low, response.Quote.YtdChange)
 
-	return fmt.Sprintf("[%s]: %s [quote from %s]",
-		quotes.MetaData.TwoSymbol, currentInfo, firstQuotePretty)
-}
-
-type stockResponseDaily struct {
-	stockMetaData
-	TimeSeries map[string]stockQuote `json:"Time Series (Daily)"`
-}
-
-type stockResponseIntra struct {
-	stockMetaData
-	TimeSeries map[string]stockQuote `json:"Time Series (15min)"`
-}
-
-type stockMetaData struct {
-	MetaData struct {
-		OneInformation     string `json:"1. Information"`
-		TwoSymbol          string `json:"2. Symbol"`
-		ThreeLastRefreshed string `json:"3. Last Refreshed"`
-		FourOutputSize     string `json:"4. Output Size"`
-		FiveTimeZone       string `json:"5. Time Zone"`
-	} `json:"Meta Data"`
 }
 
 type stockQuote struct {
-	Open   float64 `json:"1. open,string"`
-	High   float64 `json:"2. high,string"`
-	Low    float64 `json:"3. low,string"`
-	Close  float64 `json:"4. close,string"`
-	Volume int     `json:"5. volume,string"`
+	Quote struct {
+		Symbol           string  `json:"symbol"`
+		CompanyName      string  `json:"companyName"`
+		PrimaryExchange  string  `json:"primaryExchange"`
+		Sector           string  `json:"sector"`
+		CalculationPrice string  `json:"calculationPrice"`
+		Open             float64 `json:"open"`
+		OpenTime         int64   `json:"openTime"`
+		Close            float64 `json:"close"`
+		CloseTime        int64   `json:"closeTime"`
+		High             float64 `json:"high"`
+		Low              float64 `json:"low"`
+		LatestPrice      float64 `json:"latestPrice"`
+		LatestSource     string  `json:"latestSource"`
+		LatestTime       string  `json:"latestTime"`
+		LatestUpdate     int64   `json:"latestUpdate"`
+		LatestVolume     int     `json:"latestVolume"`
+		IexRealtimePrice float64 `json:"iexRealtimePrice"`
+		IexRealtimeSize  int     `json:"iexRealtimeSize"`
+		IexLastUpdated   int64   `json:"iexLastUpdated"`
+		DelayedPrice     float64 `json:"delayedPrice"`
+		DelayedPriceTime int64   `json:"delayedPriceTime"`
+		PreviousClose    float64 `json:"previousClose"`
+		Change           float64 `json:"change"`
+		ChangePercent    float64 `json:"changePercent"`
+		IexMarketPercent float64 `json:"iexMarketPercent"`
+		IexVolume        int     `json:"iexVolume"`
+		AvgTotalVolume   int     `json:"avgTotalVolume"`
+		IexBidPrice      int     `json:"iexBidPrice"`
+		IexBidSize       int     `json:"iexBidSize"`
+		IexAskPrice      int     `json:"iexAskPrice"`
+		IexAskSize       int     `json:"iexAskSize"`
+		MarketCap        int64   `json:"marketCap"`
+		PeRatio          float64 `json:"peRatio"`
+		Week52High       float64 `json:"week52High"`
+		Week52Low        float64 `json:"week52Low"`
+		YtdChange        float64 `json:"ytdChange"`
+	} `json:"quote"`
+	SystemEvent struct {
+		SystemEvent string `json:"systemEvent"`
+		Timestamp   int64  `json:"timestamp"`
+	} `json:"systemEvent"`
 }
