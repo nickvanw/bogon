@@ -138,6 +138,7 @@ func commandSetup(bogon *bogon.Client, c *cli.Context) error {
 		return err
 	}
 	bogon.AddCommands(api.TwitterHandler())
+	bogon.AddCommands(api.RawTwitterHandler())
 
 	// Register bookmark handler
 	if bmdb := c.String("bookmark"); bmdb != "" {
