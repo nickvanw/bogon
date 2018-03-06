@@ -68,9 +68,9 @@ type stockQuote struct {
 		IexMarketPercent float64 `json:"iexMarketPercent"`
 		IexVolume        int     `json:"iexVolume"`
 		AvgTotalVolume   int     `json:"avgTotalVolume"`
-		IexBidPrice      int     `json:"iexBidPrice"`
+		IexBidPrice      float64 `json:"iexBidPrice"`
 		IexBidSize       int     `json:"iexBidSize"`
-		IexAskPrice      int     `json:"iexAskPrice"`
+		IexAskPrice      float64 `json:"iexAskPrice"`
 		IexAskSize       int     `json:"iexAskSize"`
 		MarketCap        int64   `json:"marketCap"`
 		PeRatio          float64 `json:"peRatio"`
