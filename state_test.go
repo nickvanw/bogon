@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/go-kit/kit/log"
 	"github.com/nickvanw/ircx"
 	"github.com/sorcix/irc"
 )
@@ -350,4 +351,8 @@ func (f *c) Send(msg *irc.Message) error {
 
 func (f *c) HandleFunc(t string, fn func(ircx.Sender, *irc.Message)) {
 	f.handlers[t] = append(f.handlers[t], ircx.HandlerFunc(fn))
+}
+
+func (f *c) Logger() log.Logger {
+	return log.NewNopLogger()
 }
