@@ -111,6 +111,7 @@ func realMain(c *cli.Context) {
 	bogon, err := bogon.New(bot, c.String("name"), channels)
 	if err != nil {
 		level.Error(bot.Logger()).Log("action", "create", "error", err)
+		os.Exit(1)
 	}
 
 	// Setup & add config
@@ -122,6 +123,7 @@ func realMain(c *cli.Context) {
 		viper.WatchConfig()
 		if err := viper.ReadInConfig(); err != nil {
 			level.Error(bot.Logger()).Log("action", "config", "error", err)
+			os.Exit(2)
 		}
 	}
 
@@ -131,6 +133,7 @@ func realMain(c *cli.Context) {
 	// Set up commands
 	if err := commandSetup(bogon, c); err != nil {
 		level.Error(bot.Logger()).Log("action", "command_setup", "error", err)
+		os.Exit(3)
 	}
 
 	if cfg := c.String("admin"); cfg != "" {
@@ -140,7 +143,7 @@ func realMain(c *cli.Context) {
 	// Connect!
 	if err := bogon.Connect(); err != nil {
 		level.Error(bot.Logger()).Log("action", "connect", "error", err)
-		os.Exit(1)
+		os.Exit(4)
 	}
 	level.Info(bot.Logger()).Log("action", "connected", "server", c.String("server"))
 	bogon.Start()
