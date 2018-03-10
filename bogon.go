@@ -1,6 +1,7 @@
 package bogon
 
 import (
+	"github.com/go-kit/kit/log"
 	"github.com/nickvanw/ircx"
 	"github.com/sorcix/irc"
 )
@@ -17,6 +18,7 @@ type bot interface {
 	Connect() error
 	HandleLoop()
 	HandleFunc(string, func(s ircx.Sender, m *irc.Message))
+	Logger() log.Logger
 }
 
 // State models all of the interactions an IRC server can have with the state

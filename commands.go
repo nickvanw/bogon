@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/nickvanw/bogon/commands"
 	"github.com/nickvanw/bogon/dh1080"
 	"github.com/nickvanw/ircx"
@@ -58,15 +60,20 @@ func (c *Client) commandHandler(s ircx.Sender, ms *irc.Message) {
 	sender := c.commandSender(s, to, enc)
 	for _, v := range c.commands {
 		if v.raw || v.match.MatchString(params[0]) {
-			go noPanicCommand(msg, sender, v)
+			if !v.raw {
+				level.Debug(c.bot.Logger()).Log("action", "command", "command", v.name)
+			}
+			go noPanicCommand(msg, sender, v, c.bot.Logger())
 		}
 	}
 }
 
-func noPanicCommand(m commands.Message, r func(string, ...interface{}), c command) {
-	defer func() {
-		recover()
-	}()
+func noPanicCommand(m commands.Message, r func(string, ...interface{}), c command, l log.Logger) {
+	defer func(c command, l log.Logger) {
+		if err := recover(); err != nil {
+			level.Error(l).Log("action", "recover", "error", err, "command", c.name)
+		}
+	}(c, l)
 	r(c.f(m, r))
 }
 

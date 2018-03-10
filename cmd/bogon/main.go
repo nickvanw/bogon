@@ -1,11 +1,12 @@
 package main
 
 import (
-	"log"
 	"os"
 	"strings"
 
 	"github.com/codegangsta/cli"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/nickvanw/bogon"
 	"github.com/nickvanw/bogon/commands/config"
 	"github.com/nickvanw/bogon/commands/config/viperprovider"
@@ -76,13 +77,28 @@ func main() {
 			Value:  "",
 			EnvVar: "BOGON_ADMIN_SOCKET",
 		},
+		cli.BoolFlag{
+			Name:   "debug",
+			Usage:  "enable debug logging",
+			EnvVar: "BOGON_DEBUG",
+		},
 	}
 	app.Run(os.Args)
 }
 
 func realMain(c *cli.Context) {
+	// Create a logger
+	logger := log.NewLogfmtLogger(os.Stderr)
+	if c.Bool("debug") {
+		logger = level.NewFilter(logger, level.AllowAll())
+	} else {
+		logger = level.NewFilter(logger, level.AllowInfo())
+	}
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+
 	// Create the underlying connection
 	bot := ircx.Classic(c.String("server"), c.String("name"))
+	bot.SetLogger(logger)
 	bot.Config.MaxRetries = 10
 	if usr := c.String("user"); usr != "" {
 		bot.Config.User = usr
@@ -94,7 +110,8 @@ func realMain(c *cli.Context) {
 	// Create a new bogon
 	bogon, err := bogon.New(bot, c.String("name"), channels)
 	if err != nil {
-		log.Fatalf("Unable to start new bogon: %s", err)
+		level.Error(bot.Logger()).Log("action", "create", "error", err)
+		os.Exit(1)
 	}
 
 	// Setup & add config
@@ -105,7 +122,8 @@ func realMain(c *cli.Context) {
 		viper.SetConfigFile(cfg)
 		viper.WatchConfig()
 		if err := viper.ReadInConfig(); err != nil {
-			log.Fatalf("Unable to read config: %s", err)
+			level.Error(bot.Logger()).Log("action", "config", "error", err)
+			os.Exit(2)
 		}
 	}
 
@@ -114,7 +132,8 @@ func realMain(c *cli.Context) {
 
 	// Set up commands
 	if err := commandSetup(bogon, c); err != nil {
-		log.Fatalf("error setting up commands: %s", err)
+		level.Error(bot.Logger()).Log("action", "command_setup", "error", err)
+		os.Exit(3)
 	}
 
 	if cfg := c.String("admin"); cfg != "" {
@@ -123,8 +142,10 @@ func realMain(c *cli.Context) {
 
 	// Connect!
 	if err := bogon.Connect(); err != nil {
-		log.Fatalf("Unable to connect: %s", err)
+		level.Error(bot.Logger()).Log("action", "connect", "error", err)
+		os.Exit(4)
 	}
+	level.Info(bot.Logger()).Log("action", "connected", "server", c.String("server"))
 	bogon.Start()
 }
 
@@ -138,6 +159,7 @@ func commandSetup(bogon *bogon.Client, c *cli.Context) error {
 		return err
 	}
 	bogon.AddCommands(api.TwitterHandler())
+	bogon.AddCommands(api.RawTwitterHandler())
 
 	// Register bookmark handler
 	if bmdb := c.String("bookmark"); bmdb != "" {
