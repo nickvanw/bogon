@@ -12,7 +12,9 @@ jobs:
           command: |
             go get -v -t -d ./...
             go test -v ./...
-            cd cmd/bogon && go build -v && cp bogon ../../ && cd ../../
+            cd cmd/bogon
+            CGO_ENABLED=0 GOOS=linux go build -v -a -ldflags '-extldflags "-static"' .
+            cp bogon ../../ && cd ../../
       - run:
           name: Build+Push Docker Image
           command: |
