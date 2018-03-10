@@ -86,9 +86,10 @@ func (h *Handler) webHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) rawHandler(msg commands.Message, ret commands.MessageFunc) string {
-	if len(msg.Params) == 0 || msg.Params[0][0] != commandPrefix[0] {
+	if len(msg.Params) == 0 || len(msg.Params[0]) == 0 || msg.Params[0][0] != commandPrefix[0] {
 		return ""
 	}
+
 	key := strings.ToLower(msg.Params[0][1:])
 	if data, ok := h.datastore.Lookup(key); ok {
 		return fmt.Sprintf("[%s]: %s", key, data)
