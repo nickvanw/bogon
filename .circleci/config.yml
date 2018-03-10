@@ -2,13 +2,21 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.10
     working_directory: /go/src/github.com/nickvanw/bogon
     steps:
       - checkout
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
-      - run: cd cmd/bogon && go build
-      - store_artifacts:
-          path: /go/src/github.com/nickvanw/bogon/cmd/bogon/bogon
-          destination: bogon
+      - setup_remote_docker
+      - run:
+          name: Build
+          command: |
+            go get -v -t -d ./...
+            go test -v ./...
+            cd cmd/bogon && go build -v && cp bogon ../../ && cd ../../
+      - run:
+          name: Build+Push Docker Image
+          command: |
+            TAG=`echo $CIRCLE_SHA1 | cut -c -7`
+            docker login -p ${DOCKER_PASS} -u ${DOCKER_USERNAME} ${DOCKER_REG_HOST}
+            docker build -t ${DOCKER_REG_HOST}/bogon:${TAG} .
+            docker push ${DOCKER_REG_HOST}/bogon:${TAG}
