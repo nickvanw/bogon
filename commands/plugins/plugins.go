@@ -39,7 +39,7 @@ var exports = []commands.RegisterFunc{bsCommand, bitcoinCommand, dnsCommand, ipL
 	waLiquor, ltcCommand, currencyCommand, mehCommand, defineCommand, forecastCommand,
 	reddit.RedditUser, reddit.RedditSub, stockCommand, titpCommand, tumblrCommand, urbanCommand,
 	walkscoreCommand, weatherCommand, wikiCommand, wolframCommand, youtube.YoutubeCommand,
-	bing.ImageSearch, bing.BingSearch, spotify.Spotify, gifmeCommand, ethCommand}
+	bing.ImageSearch, bing.BingSearch, spotify.Spotify, gifmeCommand, ethCommand, dogeCommand}
 
 // Exports is used to return the current registered plugin methods
 func Exports() []commands.RegisterFunc {
