@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 
 	"github.com/nickvanw/bogon/commands"
 	"github.com/nickvanw/bogon/commands/util"
@@ -49,11 +50,28 @@ func getBitstamp(ch chan string) {
 		return
 	}
 	var btresponse bitstampResponse
-	if err := json.Unmarshal(bitstamp, &btresponse); err != nil {
+	if err = json.Unmarshal(bitstamp, &btresponse); err != nil {
 		ch <- fmt.Sprintf("[%s]: BitStamp Error!", util.Bold("BITSTAMP"))
 		return
 	}
-	out := fmt.Sprintf("[%s]: Last: $%s, High: $%s, Low: $%s", util.Bold("BITSTAMP"), btresponse.Last, btresponse.High, btresponse.Low)
+	var last, high, low float64
+	if err = func() error {
+		if last, err = strconv.ParseFloat(btresponse.Last, 64); err != nil {
+			return err
+		}
+		if high, err = strconv.ParseFloat(btresponse.High, 64); err != nil {
+			return err
+		}
+		if low, err = strconv.ParseFloat(btresponse.Low, 64); err != nil {
+			return err
+		}
+		return nil
+	}(); err != nil {
+		ch <- fmt.Sprintf("[%s]: BitStamp Error!", util.Bold("BITSTAMP"))
+		return
+	}
+
+	out := fmt.Sprintf("[%s]: Last: $%.2f, High: $%.2f, Low: $%.2f", util.Bold("BITSTAMP"), last, high, low)
 	ch <- out
 }
 
@@ -68,7 +86,7 @@ func getCoinMarket(ch chan string) {
 		ch <- fmt.Sprintf("[%s]: CMK Error!", util.Bold("CMK"))
 		return
 	}
-	out := fmt.Sprintf("[%s] Current Rate: $%s", util.Bold("CMK"), response[0].PriceUsd)
+	out := fmt.Sprintf("[%s] Current Rate: $%s (%s%% 1w change)", util.Bold("CMK"), response[0].PriceUsd, response[0].WeekChange)
 	ch <- out
 }
 
@@ -93,5 +111,6 @@ type coinbaseResponse struct {
 }
 
 type coinMarketCapResponse []struct {
-	PriceUsd string `json:"price_usd"`
+	PriceUsd   string `json:"price_usd"`
+	WeekChange string `json:"percent_change_7d"`
 }
