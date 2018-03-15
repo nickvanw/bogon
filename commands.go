@@ -55,6 +55,7 @@ func (c *Client) commandHandler(s ircx.Sender, ms *irc.Message) {
 		Params: params,
 		To:     to,
 		From:   m.Prefix.Name,
+		Logger: c.bot.Logger(),
 	}
 
 	sender := c.commandSender(s, to, enc)

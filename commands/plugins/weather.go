@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/go-kit/kit/log/level"
 	"github.com/nickvanw/bogon/commands"
 	"github.com/nickvanw/bogon/commands/config"
 	"github.com/nickvanw/bogon/commands/util"
@@ -18,6 +19,7 @@ var weatherCommand = func() (string, *regexp.Regexp, commands.CommandFunc, comma
 func weatherLookup(msg commands.Message, ret commands.MessageFunc) string {
 	geoAddr, err := util.GetCoordinates(msg.Params[1:])
 	if err != nil {
+		level.Error(msg.Logger).Log("action", "geolocate", "command", "weather", "error", err)
 		return "I couldn't track down that location!"
 	}
 	apiKey, avail := config.Get("WUNDERGROUND_API")

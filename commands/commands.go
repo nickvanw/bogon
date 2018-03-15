@@ -3,7 +3,11 @@
 // it also exports a set of basic plugins for use
 package commands
 
-import "regexp"
+import (
+	"regexp"
+
+	"github.com/go-kit/kit/log"
+)
 
 // RegisterFunc is exported by a plugin
 // name, regular expression, method and options
@@ -26,4 +30,6 @@ type Message struct {
 	Params []string
 	To     string
 	From   string
+
+	Logger log.Logger
 }
