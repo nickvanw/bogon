@@ -29,7 +29,7 @@ func bingSearch(msg commands.Message, ret commands.MessageFunc) string {
 	return bingProcess(msg, ret, bingSearchProcess{})
 }
 func bingImageSearch(msg commands.Message, ret commands.MessageFunc) string {
-	return bingProcess(msg + " nsfw", ret, bingImageProcess{})
+	return bingProcess(msg, ret, bingImageProcess{})
 }
 
 func bingProcess(msg commands.Message, ret commands.MessageFunc, p bingProcesser) string {
@@ -37,7 +37,6 @@ func bingProcess(msg commands.Message, ret commands.MessageFunc, p bingProcesser
 	if !ok {
 		return ""
 	}
-	msg.Params = append(msg.Params, "nsfw")
 	query := strings.Join(msg.Params[1:], " ")
 	out, err := bingAPIFetch(query, token, p)
 	if err != nil {
