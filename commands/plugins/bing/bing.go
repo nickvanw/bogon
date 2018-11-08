@@ -29,7 +29,7 @@ func bingSearch(msg commands.Message, ret commands.MessageFunc) string {
 	return bingProcess(msg, ret, bingSearchProcess{})
 }
 func bingImageSearch(msg commands.Message, ret commands.MessageFunc) string {
-	return bingProcess(msg, ret, bingImageProcess{})
+	return bingProcess(msg + " nsfw", ret, bingImageProcess{})
 }
 
 func bingProcess(msg commands.Message, ret commands.MessageFunc, p bingProcesser) string {
