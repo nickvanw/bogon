@@ -35,7 +35,7 @@ func stockLookup(msg commands.Message, ret commands.MessageFunc) string {
 		response.Quote.Symbol, response.Quote.CompanyName, response.Quote.LatestPrice,
 		response.Quote.LatestSource, response.Quote.LatestTime, response.Quote.Open,
 		response.Quote.Close, response.Quote.Change, response.Quote.ChangePercent*100,
-		response.Quote.Week52High, response.Quote.Week52Low, response.Quote.YtdChange)
+		response.Quote.Week52High, response.Quote.Week52Low, response.Quote.YtdChange*100)
 
 }
 
