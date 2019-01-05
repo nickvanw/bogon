@@ -18,7 +18,7 @@ var weatherCommand = func() (string, *regexp.Regexp, commands.CommandFunc, comma
 func weatherLookup(msg commands.Message, ret commands.MessageFunc) string {
 	geoAddr, err := util.GetCoordinates(msg.Params[1:])
 	if err != nil {
-		return err.Error()
+		return "I couldn't track down that location!"
 	}
 	apiKey, avail := config.Get("WUNDERGROUND_API")
 	if avail != true {

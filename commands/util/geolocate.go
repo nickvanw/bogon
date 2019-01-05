@@ -28,7 +28,10 @@ func GetCoordinates(addr []string) (*GoogleReturn, error) {
 		return nil, errors.New("error geolocating your coordinates from Google")
 	}
 	var geo geoLocation
-	json.Unmarshal(data, &geo)
+	if err := json.Unmarshal(data, &geo); err != nil {
+		return nil, errors.New("got invalid response from google")
+	}
+
 	if geo.Status != "OK" || len(geo.Results) < 1 {
 		return nil, ErrInvalidAddress
 	}
