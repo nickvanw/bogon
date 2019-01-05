@@ -21,9 +21,7 @@ require (
 	github.com/motain/gocheck v0.0.0-20131023154940-9beb271d26e6 // indirect
 	github.com/nickvanw/gifgo v0.0.0-20160227165558-4e55ba35cc10
 	github.com/nickvanw/ircx v1.0.0
-	github.com/nickvanw/ircx/v2 v2.0.0-20190105000638-9832165ab5c9
 	github.com/nickvanw/meh v0.0.0-20150326122049-161e46332fdc
-	github.com/sorcix/irc v1.1.4
 	github.com/spf13/viper v1.3.1
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec // indirect
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
@@ -31,5 +29,4 @@ require (
 	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
 	golang.org/x/text v0.3.0
 	gopkg.in/sorcix/irc.v1 v1.1.4
-	gopkg.in/sorcix/irc.v2 v2.0.0-20180626144439-63eed78b082d
 )
