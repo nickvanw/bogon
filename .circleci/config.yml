@@ -10,6 +10,7 @@ jobs:
       - run:
           name: Build
           command: |
+            export GO111MODULE=on
             go get -v -t -d ./...
             go test -v ./...
             cd cmd/bogon
