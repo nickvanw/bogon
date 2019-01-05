@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/nickvanw/ircx"
-	"github.com/sorcix/irc"
+	irc "gopkg.in/sorcix/irc.v1"
 )
 
 const name = "test_bot"

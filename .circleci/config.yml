@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.10
+      - image: circleci/golang:1.11
     working_directory: /go/src/github.com/nickvanw/bogon
     steps:
       - checkout
@@ -10,6 +10,7 @@ jobs:
       - run:
           name: Build
           command: |
+            export GO111MODULE=on
             go get -v -t -d ./...
             go test -v ./...
             cd cmd/bogon

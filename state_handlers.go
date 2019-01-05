@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/nickvanw/ircx"
-	"github.com/sorcix/irc"
+	irc "gopkg.in/sorcix/irc.v1"
 )
 
 func (c *Client) registerStateHandlers() {
