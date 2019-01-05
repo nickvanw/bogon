@@ -9,7 +9,7 @@ import (
 
 	"github.com/nickvanw/bogon/dh1080"
 	"github.com/nickvanw/ircx"
-	"github.com/sorcix/irc"
+	irc "gopkg.in/sorcix/irc.v1"
 )
 
 const encOff string = ".encoff"

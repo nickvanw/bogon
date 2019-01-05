@@ -3,7 +3,7 @@ package bogon
 import (
 	"github.com/go-kit/kit/log"
 	"github.com/nickvanw/ircx"
-	"github.com/sorcix/irc"
+	irc "gopkg.in/sorcix/irc.v1"
 )
 
 // Client contains a single IRC bot

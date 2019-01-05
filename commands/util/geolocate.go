@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/nickvanw/bogon/commands/config"
 )
 
 var (
@@ -16,7 +18,11 @@ var (
 // a specified address
 func GetCoordinates(addr []string) (*GoogleReturn, error) {
 	address := URLEncode(strings.Join(addr, " "))
-	geoURL := fmt.Sprintf("http://maps.googleapis.com/maps/api/geocode/json?address=%s&sensor=false", address)
+	apiKey, avail := config.Get("GOOGLE_API_KEY")
+	if !avail {
+		return nil, errors.New("I need a Google API Token")
+	}
+	geoURL := fmt.Sprintf("http://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s&sensor=false", address, apiKey)
 	data, err := Fetch(geoURL)
 	if err != nil {
 		return nil, ErrInvalidAddress
