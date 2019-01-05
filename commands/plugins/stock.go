@@ -34,7 +34,7 @@ func stockLookup(msg commands.Message, ret commands.MessageFunc) string {
 	return p.Sprintf("%s (%s): Latest Price: %.2f (from '%s' at %s) | Open: %.2f | Close: %.2f | Change: %.2f (%.2f%%) | 52 Week High: %.2f | 52 Week Low: %.2f | YTD Change: %.2f%%",
 		response.Quote.Symbol, response.Quote.CompanyName, response.Quote.LatestPrice,
 		response.Quote.LatestSource, response.Quote.LatestTime, response.Quote.Open,
-		response.Quote.Close, response.Quote.Change, response.Quote.ChangePercent,
+		response.Quote.Close, response.Quote.Change*100.00, response.Quote.ChangePercent,
 		response.Quote.Week52High, response.Quote.Week52Low, response.Quote.YtdChange)
 
 }
