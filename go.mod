@@ -1,5 +1,7 @@
 module github.com/nickvanw/bogon
 
+go 1.14
+
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/ChimeraCoder/anaconda v2.0.0+incompatible
@@ -21,7 +23,7 @@ require (
 	github.com/motain/gocheck v0.0.0-20131023154940-9beb271d26e6 // indirect
 	github.com/nickvanw/gifgo v0.0.0-20160227165558-4e55ba35cc10
 	github.com/nickvanw/ircx v1.0.0
-	github.com/nickvanw/meh v0.0.0-20150326122049-161e46332fdc
+	github.com/nickvanw/meh v0.0.0-20200613230347-4f2d56f65dcf
 	github.com/spf13/viper v1.3.1
 	github.com/vaughan0/go-ini v0.0.0-20130923145212-a98ad7ee00ec // indirect
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
