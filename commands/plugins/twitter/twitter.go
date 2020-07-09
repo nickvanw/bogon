@@ -60,8 +60,8 @@ func (a *API) handler(msg commands.Message, ret commands.MessageFunc) string {
 	} else {
 		time = when.Local().Format("Mon Jan 2, 2006 @ 3:04pm")
 	}
-	return fmt.Sprintf("%s: %s [%s rt, %s fav] on %s", msgs[0].User.ScreenName, util.StripNewLines(msgs[0].Text),
-		humanize.Comma(int64(msgs[0].RetweetCount)), humanize.Comma(int64(msgs[0].FavoriteCount)), time)
+	return fmt.Sprintf("%s: %s [%s rt, %s fav] on %s: https://twitter.com/i/web/status/%s", msgs[0].User.ScreenName, util.StripNewLines(msgs[0].Text),
+		humanize.Comma(int64(msgs[0].RetweetCount)), humanize.Comma(int64(msgs[0].FavoriteCount)), time, msgs[0].IdStr)
 }
 
 // TwitterHandler produces the command handler for Twitter lookups
