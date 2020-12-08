@@ -22,7 +22,7 @@ func (a *API) rawHandler(msg commands.Message, ret commands.MessageFunc) string 
 			continue
 		}
 		// basically, only this: https://twitter.com/molly_knight/status/970808912818577410
-		if (u.Scheme == "https" || u.Scheme == "http") && (u.Host == "twitter.com") {
+		if (u.Scheme == "https" || u.Scheme == "http") && (u.Host == "twitter.com" || u.Host == "mobile.twitter.com") {
 			p, tweet := path.Split(u.Path)
 			if strings.HasSuffix(p, "/status/") {
 				tweet, err := strconv.Atoi(tweet)
